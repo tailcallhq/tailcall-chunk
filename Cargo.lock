@@ -329,7 +329,7 @@ dependencies = [
 
 [[package]]
 name = "tailcall-chunk"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "gh-workflow",
 ]
