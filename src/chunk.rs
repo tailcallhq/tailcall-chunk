@@ -67,8 +67,8 @@ pub enum Chunk<A> {
     /// Represents the concatenation of two chunks
     Concat(Rc<Chunk<A>>, Rc<Chunk<A>>),
 
-    /// Represents a lazy transformation of elements
-    Transform(Rc<Chunk<A>>, Rc<dyn Fn(A) -> A>),
+    /// Represents a lazy flattening of elements
+    TransformFlatten(Rc<Chunk<A>>, Rc<dyn Fn(A) -> Chunk<A>>),
 }
 
 impl<A> Default for Chunk<A> {
@@ -179,7 +179,36 @@ impl<A> Chunk<A> {
     /// assert_eq!(doubled.as_vec(), vec![6, 4, 2]);
     /// ```
     pub fn transform(self, f: impl Fn(A) -> A + 'static) -> Self {
-        Chunk::Transform(Rc::new(self), Rc::new(f))
+        self.transform_flatten(move |a| Chunk::new(f(a)))
+    }
+
+    /// Transforms each element in the chunk into a new chunk and flattens the result.
+    ///
+    /// This method creates a lazy representation of the transformation without actually
+    /// performing it. The transformation is only executed when [`as_vec`](Chunk::as_vec)
+    /// or [`as_vec_mut`](Chunk::as_vec_mut) is called.
+    ///
+    /// # Performance
+    /// - Creating the transformation: O(1)
+    /// - Executing the transformation (during [`as_vec`](Chunk::as_vec)): O(n)
+    ///
+    /// # Arguments
+    /// * `f` - A function that takes an element of type `A` and returns
+    ///         a new `Chunk<A>`
+    ///
+    /// # Examples
+    /// ```
+    /// use tailcall_chunk::Chunk;
+    ///
+    /// let chunk = Chunk::default().prepend(2).prepend(1);
+    /// // Transform each number x into a chunk containing [x, x+1]
+    /// let expanded = chunk.transform_flatten(|x| {
+    ///     Chunk::default().prepend(x + 1).prepend(x)
+    /// });
+    /// assert_eq!(expanded.as_vec(), vec![1, 2, 2, 3]);
+    /// ```
+    pub fn transform_flatten(self, f: impl Fn(A) -> Chunk<A> + 'static) -> Self {
+        Chunk::TransformFlatten(Rc::new(self), Rc::new(f))
     }
 
     /// Converts the chunk into a vector of references to its elements.
@@ -225,11 +254,11 @@ impl<A> Chunk<A> {
                 a.as_vec_mut(buf);
                 b.as_vec_mut(buf);
             }
-            Chunk::Transform(a, f) => {
+            Chunk::TransformFlatten(a, f) => {
                 let mut tmp = Vec::new();
                 a.as_vec_mut(&mut tmp);
                 for elem in tmp {
-                    buf.push(f(elem));
+                    f(elem).as_vec_mut(buf);
                 }
             }
         }
@@ -375,5 +404,56 @@ mod tests {
             .transform(|x| x + 1)
             .transform(|x| x * 3);
         assert_eq!(result.as_vec(), vec![21, 15, 9]);
+    }
+
+    #[test]
+    fn test_transform_flatten() {
+        // Test transform_flatten on empty chunk
+        let empty: Chunk<i32> = Chunk::default();
+        let transformed_empty = empty.transform_flatten(|x| Chunk::new(x * 2));
+        assert_eq!(transformed_empty.as_vec(), Vec::<i32>::new());
+
+        // Test transform_flatten on single element
+        let single = Chunk::default().prepend(5);
+        let doubled = single.transform_flatten(|x| Chunk::new(x * 2));
+        assert_eq!(doubled.as_vec(), vec![10]);
+
+        // Test expanding each element into multiple elements
+        let numbers = Chunk::default().prepend(2).prepend(1);
+        let expanded = numbers.transform_flatten(|x| {
+            Chunk::default().prepend(x + 1).prepend(x)
+        });
+        assert_eq!(expanded.as_vec(), vec![1, 2, 2, 3]);
+
+        // Test with nested chunks
+        let chunk = Chunk::default().prepend(3).prepend(2).prepend(1);
+        let nested = chunk.transform_flatten(|x| {
+            if x % 2 == 0 {
+                // Even numbers expand to [x, x+1]
+                Chunk::default().prepend(x + 1).prepend(x)
+            } else {
+                // Odd numbers expand to [x]
+                Chunk::new(x)
+            }
+        });
+        assert_eq!(nested.as_vec(), vec![1, 2, 3, 3]);
+
+        // Test chaining transform_flatten operations
+        let numbers = Chunk::default().prepend(2).prepend(1);
+        let result = numbers
+            .transform_flatten(|x| Chunk::default().prepend(x).prepend(x))
+            .transform_flatten(|x| Chunk::default().prepend(x + 1).prepend(x));
+        assert_eq!(result.as_vec(), vec![1, 2, 1, 2, 2, 3, 2, 3]);
+
+        // Test with empty chunk results
+        let chunk = Chunk::default().prepend(1).prepend(2);
+        let filtered = chunk.transform_flatten(|x| {
+            if x % 2 == 0 {
+                Chunk::new(x)
+            } else {
+                Chunk::default() // Empty chunk for odd numbers
+            }
+        });
+        assert_eq!(filtered.as_vec(), vec![2]);
     }
 }
