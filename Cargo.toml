@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 
 [build-dependencies]
-gh-workflow = "0.4.0"
+gh-workflow = "0.4"

@@ -100,9 +100,9 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "gh-workflow"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5007ae4a3cf8324594749eaa6b66ddc45fe64e2f2e0d3a0f4a77014e9bc6d2d3"
+checksum = "ae1ad3bcceabc26816ce586fece0653c5253300dcfa66c0a62efed1ccb5f745d"
 dependencies = [
  "async-trait",
  "derive_more",
