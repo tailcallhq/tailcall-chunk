@@ -1,10 +1,10 @@
-//! A Rust implementation of a persistent data structure for efficient prepend and concatenation operations.
+//! A Rust implementation of a persistent data structure for efficient append and concatenation operations.
 //!
 //! This crate provides the [`Chunk`] type, which implements a persistent data structure
-//! that allows O(1) prepend and concatenation operations through structural sharing.
+//! that allows O(1) append and concatenation operations through structural sharing.
 //!
 //! # Features
-//! - O(1) prepend operations
+//! - O(1) append operations
 //! - O(1) concatenation operations
 //! - Immutable/persistent data structure
 //! - Memory efficient through structural sharing
@@ -13,8 +13,8 @@
 //! ```
 //! use tailcall_chunk::Chunk;
 //!
-//! let chunk1 = Chunk::default().prepend(1).prepend(2);
-//! let chunk2 = Chunk::default().prepend(3).prepend(4);
+//! let chunk1 = Chunk::default().append(1).append(2);
+//! let chunk2 = Chunk::default().append(3).append(4);
 //! let combined = chunk1.concat(chunk2);
 //!
 //! assert_eq!(combined.as_vec(), vec![2, 1, 4, 3]);
@@ -22,22 +22,22 @@
 
 use std::rc::Rc;
 
-/// A persistent data structure that provides efficient prepend and concatenation operations.
+/// A persistent data structure that provides efficient append and concatenation operations.
 ///
 /// # Overview
-/// `Chunk<A>` is an immutable data structure that allows O(1) complexity for prepend and
+/// `Chunk<A>` is an immutable data structure that allows O(1) complexity for append and
 /// concatenation operations through structural sharing. It uses [`Rc`] (Reference Counting)
 /// for efficient memory management.
 ///
 /// # Performance
-/// - Prepend operation: O(1)
+/// - Append operation: O(1)
 /// - Concatenation operation: O(1)
 /// - Converting to Vec: O(n)
 ///
 /// # Implementation Details
 /// The data structure is implemented as an enum with three variants:
 /// - `Empty`: Represents an empty chunk
-/// - `Prepend`: Represents a single element prepended to another chunk
+/// - `Append`: Represents a single element appended to another chunk
 /// - `Concat`: Represents the concatenation of two chunks
 ///
 /// # Examples
@@ -45,10 +45,10 @@ use std::rc::Rc;
 /// use tailcall_chunk::Chunk;
 ///
 /// let mut chunk = Chunk::default();
-/// chunk = chunk.prepend(1);
-/// chunk = chunk.prepend(2);
+/// chunk = chunk.append(1);
+/// chunk = chunk.append(2);
 ///
-/// let other_chunk = Chunk::default().prepend(3).prepend(4);
+/// let other_chunk = Chunk::default().append(3).append(4);
 /// let combined = chunk.concat(other_chunk);
 ///
 /// assert_eq!(combined.as_vec(), vec![2,1, 4, 3]);
@@ -61,8 +61,8 @@ use std::rc::Rc;
 pub enum Chunk<A> {
     /// Represents an empty chunk
     Empty,
-    /// Represents a single element `A` prepended to another chunk
-    Prepend(A, Rc<Chunk<A>>),
+    /// Represents a single element `A` appended to another chunk
+    Append(A, Rc<Chunk<A>>),
 
     /// Represents the concatenation of two chunks
     Concat(Rc<Chunk<A>>, Rc<Chunk<A>>),
@@ -91,7 +91,7 @@ impl<A> Chunk<A> {
     /// assert!(!chunk.is_null());
     /// ```
     pub fn new(a: A) -> Self {
-        Chunk::default().prepend(a)
+        Chunk::default().append(a)
     }
 
     /// Returns `true` if the chunk is empty.
@@ -103,27 +103,27 @@ impl<A> Chunk<A> {
     /// let chunk: Chunk<i32> = Chunk::default();
     /// assert!(chunk.is_null());
     ///
-    /// let non_empty = chunk.prepend(42);
+    /// let non_empty = chunk.append(42);
     /// assert!(!non_empty.is_null());
     /// ```
     pub fn is_null(&self) -> bool {
         matches!(self, Chunk::Empty)
     }
 
-    /// Prepend a new element to the chunk.
+    /// Append a new element to the chunk.
     ///
-    /// This operation has O(1) complexity as it creates a new `Prepend` variant
+    /// This operation has O(1) complexity as it creates a new `Append` variant
     /// that references the existing chunk through an [`Rc`].
     ///
     /// # Examples
     /// ```
     /// use tailcall_chunk::Chunk;
     ///
-    /// let chunk = Chunk::default().prepend(1).prepend(2);
+    /// let chunk = Chunk::default().append(1).append(2);
     /// assert_eq!(chunk.as_vec(), vec![2, 1]);
     /// ```
-    pub fn prepend(self, a: A) -> Self {
-        Chunk::Prepend(a, Rc::new(self))
+    pub fn append(self, a: A) -> Self {
+        Chunk::Append(a, Rc::new(self))
     }
 
     /// Concatenates this chunk with another chunk.
@@ -139,8 +139,8 @@ impl<A> Chunk<A> {
     /// ```
     /// use tailcall_chunk::Chunk;
     ///
-    /// let chunk1 = Chunk::default().prepend(1).prepend(2);
-    /// let chunk2 = Chunk::default().prepend(3).prepend(4);
+    /// let chunk1 = Chunk::default().append(1).append(2);
+    /// let chunk2 = Chunk::default().append(3).append(4);
     /// let combined = chunk1.concat(chunk2);
     /// assert_eq!(combined.as_vec(), vec![2,1, 4,3]);
     /// ```
@@ -172,7 +172,7 @@ impl<A> Chunk<A> {
     /// ```
     /// use tailcall_chunk::Chunk;
     ///
-    /// let chunk = Chunk::default().prepend(1).prepend(2).prepend(3);
+    /// let chunk = Chunk::default().append(1).append(2).append(3);
     /// // This operation is O(1) and doesn't actually transform the elements
     /// let doubled = chunk.transform(|x| x * 2);
     /// // The transformation happens here, when we call as_vec()
@@ -200,10 +200,10 @@ impl<A> Chunk<A> {
     /// ```
     /// use tailcall_chunk::Chunk;
     ///
-    /// let chunk = Chunk::default().prepend(2).prepend(1);
+    /// let chunk = Chunk::default().append(2).append(1);
     /// // Transform each number x into a chunk containing [x, x+1]
     /// let expanded = chunk.transform_flatten(|x| {
-    ///     Chunk::default().prepend(x + 1).prepend(x)
+    ///     Chunk::default().append(x + 1).append(x)
     /// });
     /// assert_eq!(expanded.as_vec(), vec![1, 2, 2, 3]);
     /// ```
@@ -220,7 +220,7 @@ impl<A> Chunk<A> {
     /// ```
     /// use tailcall_chunk::Chunk;
     ///
-    /// let chunk = Chunk::default().prepend(1).prepend(2).prepend(3);
+    /// let chunk = Chunk::default().append(1).append(2).append(3);
     /// assert_eq!(chunk.as_vec(), vec![3, 2, 1]);
     /// ```
     pub fn as_vec(&self) -> Vec<A>
@@ -246,7 +246,7 @@ impl<A> Chunk<A> {
     {
         match self {
             Chunk::Empty => {}
-            Chunk::Prepend(a, rest) => {
+            Chunk::Append(a, rest) => {
                 buf.push(a.clone());
                 rest.as_vec_mut(buf);
             }
@@ -257,7 +257,7 @@ impl<A> Chunk<A> {
             Chunk::TransformFlatten(a, f) => {
                 let mut tmp = Vec::new();
                 a.as_vec_mut(&mut tmp);
-                for elem in tmp {
+                for elem in tmp.into_iter().rev() {
                     f(elem).as_vec_mut(buf);
                 }
             }
@@ -286,26 +286,26 @@ mod tests {
         let empty: Chunk<i32> = Chunk::default();
         assert!(empty.is_null());
 
-        let non_empty = empty.prepend(1);
+        let non_empty = empty.append(1);
         assert!(!non_empty.is_null());
     }
 
     #[test]
-    fn test_prepend() {
-        let chunk = Chunk::default().prepend(1).prepend(2).prepend(3);
-        assert_eq!(chunk.as_vec(), vec![3, 2, 1]);
+    fn test_append() {
+        let chunk = Chunk::default().append(1).append(2).append(3);
+        assert_eq!(chunk.as_vec(), vec![1, 2, 3]);
 
         // Test that original chunk remains unchanged (persistence)
-        let chunk1 = Chunk::default().prepend(1);
-        let chunk2 = chunk1.clone().prepend(2);
+        let chunk1 = Chunk::default().append(1);
+        let chunk2 = chunk1.clone().append(2);
         assert_eq!(chunk1.as_vec(), vec![1]);
-        assert_eq!(chunk2.as_vec(), vec![2, 1]);
+        assert_eq!(chunk2.as_vec(), vec![1, 2]);
     }
 
     #[test]
     fn test_concat() {
-        let chunk1 = Chunk::default().prepend(2).prepend(1);
-        let chunk2 = Chunk::default().prepend(4).prepend(3);
+        let chunk1 = Chunk::default().append(1).append(2);
+        let chunk2 = Chunk::default().append(3).append(4);
         let combined = chunk1.clone().concat(chunk2.clone());
 
         assert_eq!(combined.as_vec(), vec![1, 2, 3, 4]);
@@ -330,46 +330,46 @@ mod tests {
         assert_eq!(empty.as_vec(), Vec::<i32>::new());
 
         // Test single element
-        let single = Chunk::default().prepend(42);
+        let single = Chunk::default().append(42);
         assert_eq!(single.as_vec(), vec![42]);
 
         // Test multiple elements
-        let multiple = Chunk::default().prepend(3).prepend(2).prepend(1);
+        let multiple = Chunk::default().append(1).append(2).append(3);
         assert_eq!(multiple.as_vec(), vec![1, 2, 3]);
 
         // Test complex structure with concatenation
-        let chunk1 = Chunk::default().prepend(2).prepend(1);
-        let chunk2 = Chunk::default().prepend(4).prepend(3);
+        let chunk1 = Chunk::default().append(1).append(2);
+        let chunk2 = Chunk::default().append(3).append(4);
         let complex = chunk1.concat(chunk2);
         assert_eq!(complex.as_vec(), vec![1, 2, 3, 4]);
     }
 
     #[test]
     fn test_structural_sharing() {
-        let chunk1 = Chunk::default().prepend(1).prepend(2);
-        let chunk2 = chunk1.clone().prepend(3);
-        let chunk3 = chunk1.clone().prepend(4);
+        let chunk1 = Chunk::default().append(1).append(2);
+        let chunk2 = chunk1.clone().append(3);
+        let chunk3 = chunk1.clone().append(4);
 
         // Verify that modifications create new structures while preserving the original
-        assert_eq!(chunk1.as_vec(), vec![2, 1]);
-        assert_eq!(chunk2.as_vec(), vec![3, 2, 1]);
-        assert_eq!(chunk3.as_vec(), vec![4, 2, 1]);
+        assert_eq!(chunk1.as_vec(), vec![1, 2]);
+        assert_eq!(chunk2.as_vec(), vec![1, 2, 3]);
+        assert_eq!(chunk3.as_vec(), vec![1, 2, 4]);
     }
 
     #[test]
     fn test_with_different_types() {
         // Test with strings
         let string_chunk = Chunk::default()
-            .prepend(String::from("hello"))
-            .prepend(String::from("world"));
+            .append(String::from("hello"))
+            .append(String::from("world"));
         assert_eq!(string_chunk.as_vec().len(), 2);
 
         // Test with floating point numbers
-        let float_chunk = Chunk::default().prepend(3.14).prepend(2.718);
-        assert_eq!(float_chunk.as_vec(), vec![2.718, 3.14]);
+        let float_chunk = Chunk::default().append(3.14).append(2.718);
+        assert_eq!(float_chunk.as_vec(), vec![3.14, 2.718]);
 
         // Test with boolean values
-        let bool_chunk = Chunk::default().prepend(true).prepend(false).prepend(true);
+        let bool_chunk = Chunk::default().append(true).append(false).append(true);
         assert_eq!(bool_chunk.as_vec(), vec![true, false, true]);
     }
 
@@ -381,29 +381,29 @@ mod tests {
         assert_eq!(transformed_empty.as_vec(), Vec::<i32>::new());
 
         // Test transform on single element
-        let single = Chunk::default().prepend(5);
+        let single = Chunk::default().append(5);
         let doubled = single.transform(|x| x * 2);
         assert_eq!(doubled.as_vec(), vec![10]);
 
         // Test transform on multiple elements
-        let multiple = Chunk::default().prepend(3).prepend(2).prepend(1);
+        let multiple = Chunk::default().append(1).append(2).append(3);
         let doubled = multiple.transform(|x| x * 2);
         assert_eq!(doubled.as_vec(), vec![2, 4, 6]);
 
         // Test transform with string manipulation
         let string_chunk = Chunk::default()
-            .prepend(String::from("hello"))
-            .prepend(String::from("world"));
+            .append(String::from("hello"))
+            .append(String::from("world"));
         let uppercase = string_chunk.transform(|s| s.to_uppercase());
-        assert_eq!(uppercase.as_vec(), vec!["WORLD", "HELLO"]);
+        assert_eq!(uppercase.as_vec(), vec!["HELLO", "WORLD"]);
 
         // Test chaining multiple transforms
-        let numbers = Chunk::default().prepend(1).prepend(2).prepend(3);
+        let numbers = Chunk::default().append(1).append(2).append(3);
         let result = numbers
             .transform(|x| x * 2)
             .transform(|x| x + 1)
             .transform(|x| x * 3);
-        assert_eq!(result.as_vec(), vec![21, 15, 9]);
+        assert_eq!(result.as_vec(), vec![9, 15, 21]);
     }
 
     #[test]
@@ -414,23 +414,21 @@ mod tests {
         assert_eq!(transformed_empty.as_vec(), Vec::<i32>::new());
 
         // Test transform_flatten on single element
-        let single = Chunk::default().prepend(5);
+        let single = Chunk::default().append(5);
         let doubled = single.transform_flatten(|x| Chunk::new(x * 2));
         assert_eq!(doubled.as_vec(), vec![10]);
 
         // Test expanding each element into multiple elements
-        let numbers = Chunk::default().prepend(2).prepend(1);
-        let expanded = numbers.transform_flatten(|x| {
-            Chunk::default().prepend(x + 1).prepend(x)
-        });
+        let numbers = Chunk::default().append(1).append(2);
+        let expanded = numbers.transform_flatten(|x| Chunk::default().append(x + 1).append(x));
         assert_eq!(expanded.as_vec(), vec![1, 2, 2, 3]);
 
         // Test with nested chunks
-        let chunk = Chunk::default().prepend(3).prepend(2).prepend(1);
+        let chunk = Chunk::default().append(1).append(2).append(3);
         let nested = chunk.transform_flatten(|x| {
             if x % 2 == 0 {
                 // Even numbers expand to [x, x+1]
-                Chunk::default().prepend(x + 1).prepend(x)
+                Chunk::default().append(x + 1).append(x)
             } else {
                 // Odd numbers expand to [x]
                 Chunk::new(x)
@@ -439,14 +437,14 @@ mod tests {
         assert_eq!(nested.as_vec(), vec![1, 2, 3, 3]);
 
         // Test chaining transform_flatten operations
-        let numbers = Chunk::default().prepend(2).prepend(1);
+        let numbers = Chunk::default().append(2).append(1);
         let result = numbers
-            .transform_flatten(|x| Chunk::default().prepend(x).prepend(x))
-            .transform_flatten(|x| Chunk::default().prepend(x + 1).prepend(x));
+            .transform_flatten(|x| Chunk::default().append(x).append(x))
+            .transform_flatten(|x| Chunk::default().append(x + 1).append(x));
         assert_eq!(result.as_vec(), vec![1, 2, 1, 2, 2, 3, 2, 3]);
 
         // Test with empty chunk results
-        let chunk = Chunk::default().prepend(1).prepend(2);
+        let chunk = Chunk::default().append(1).append(2);
         let filtered = chunk.transform_flatten(|x| {
             if x % 2 == 0 {
                 Chunk::new(x)
