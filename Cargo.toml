@@ -9,5 +9,5 @@ documentation = "https://docs.rs/tailcall-chunk"
 
 [dependencies]
 
-[build-dependencies]
+[dev-dependencies]
 gh-workflow = "0.4"
