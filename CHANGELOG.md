@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5](https://github.com/tailcallhq/tailcall-chunk/compare/v0.2.4...v0.2.5) - 2024-11-16
+
+### Other
+
+- add documentation for lib
+
 ## [0.2.4](https://github.com/tailcallhq/tailcall-chunk/compare/v0.2.3...v0.2.4) - 2024-11-16
 
 ### Other
