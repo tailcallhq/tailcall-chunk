@@ -17,7 +17,7 @@
 //! let chunk2 = Chunk::new().prepend(3).prepend(4);
 //! let combined = chunk1.concat(chunk2);
 //!
-//! assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+//! assert_eq!(combined.as_vec(), vec![2, 1, 4, 3]);
 //! ```
 
 use std::rc::Rc;
@@ -51,7 +51,7 @@ use std::rc::Rc;
 /// let other_chunk = Chunk::new().prepend(3).prepend(4);
 /// let combined = chunk.concat(other_chunk);
 ///
-/// assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+/// assert_eq!(combined.as_vec(), vec![2,1, 4, 3]);
 /// ```
 ///
 /// # References
@@ -118,7 +118,7 @@ impl<A> Chunk<A> {
     /// use tailcall_chunk::Chunk;
     ///
     /// let chunk = Chunk::new().prepend(1).prepend(2);
-    /// assert_eq!(chunk.as_vec(), vec![&1, &2]);
+    /// assert_eq!(chunk.as_vec(), vec![2, 1]);
     /// ```
     pub fn prepend(self, a: A) -> Self {
         Chunk::Prepend(a, Rc::new(self))
@@ -140,7 +140,7 @@ impl<A> Chunk<A> {
     /// let chunk1 = Chunk::new().prepend(1).prepend(2);
     /// let chunk2 = Chunk::new().prepend(3).prepend(4);
     /// let combined = chunk1.concat(chunk2);
-    /// assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+    /// assert_eq!(combined.as_vec(), vec![2,1, 4,3]);
     /// ```
     pub fn concat(self, other: Chunk<A>) -> Self {
         if self.is_null() {
@@ -174,7 +174,7 @@ impl<A> Chunk<A> {
     /// // This operation is O(1) and doesn't actually transform the elements
     /// let doubled = chunk.transform(|x| x * 2);
     /// // The transformation happens here, when we call as_vec()
-    /// assert_eq!(doubled.as_vec(), vec![&6, &4, &2]);
+    /// assert_eq!(doubled.as_vec(), vec![6, 4, 2]);
     /// ```
     pub fn transform(self, f: impl Fn(A) -> A + 'static) -> Self {
         self.transform_flatten(move |a| Chunk::new().prepend(f(a)))
@@ -203,7 +203,7 @@ impl<A> Chunk<A> {
     /// // This operation is O(1) and doesn't actually transform the elements
     /// let duplicated = chunk.transform_flatten(|x| Chunk::new().prepend(x).prepend(x));
     /// // The transformation happens here, when we call as_vec()
-    /// assert_eq!(duplicated.as_vec(), vec![&2, &2, &1, &1]);
+    /// assert_eq!(duplicated.as_vec(), vec![2, 2, 1, 1]);
     /// ```
     pub fn transform_flatten(self, f: impl Fn(A) -> Chunk<A> + 'static) -> Chunk<A> {
         Chunk::FlatMap(Rc::new(self), Rc::new(f))
@@ -219,7 +219,7 @@ impl<A> Chunk<A> {
     /// use tailcall_chunk::Chunk;
     ///
     /// let chunk = Chunk::new().prepend(1).prepend(2).prepend(3);
-    /// assert_eq!(chunk.as_vec(), vec![&1, &2, &3]);
+    /// assert_eq!(chunk.as_vec(), vec![3, 2, 1]);
     /// ```
     pub fn as_vec(&self) -> Vec<A>
     where
@@ -350,9 +350,9 @@ mod tests {
         let chunk3 = chunk1.clone().prepend(4);
 
         // Verify that modifications create new structures while preserving the original
-        assert_eq!(chunk1.as_vec(), vec![1, 2]);
-        assert_eq!(chunk2.as_vec(), vec![1, 2, 3]);
-        assert_eq!(chunk3.as_vec(), vec![1, 2, 4]);
+        assert_eq!(chunk1.as_vec(), vec![2, 1]);
+        assert_eq!(chunk2.as_vec(), vec![3, 2, 1]);
+        assert_eq!(chunk3.as_vec(), vec![4, 2, 1]);
     }
 
     #[test]
@@ -365,7 +365,7 @@ mod tests {
 
         // Test with floating point numbers
         let float_chunk = Chunk::new().prepend(3.14).prepend(2.718);
-        assert_eq!(float_chunk.as_vec(), vec![3.14, 2.718]);
+        assert_eq!(float_chunk.as_vec(), vec![2.718, 3.14]);
 
         // Test with boolean values
         let bool_chunk = Chunk::new().prepend(true).prepend(false).prepend(true);
@@ -380,7 +380,7 @@ mod tests {
             Rc::new(chunk),
             Rc::new(|x| Chunk::new().prepend(x * 2).prepend(x)),
         );
-        assert_eq!(mapped.as_vec(), vec![2, 1, 4, 2]);
+        assert_eq!(mapped.as_vec(), vec![2, 4, 1, 2]);
 
         // Test flat_map with empty chunk
         let empty: Chunk<i32> = Chunk::new();
@@ -390,10 +390,8 @@ mod tests {
         // Test nested flat_map
         let chunk = Chunk::new().prepend(1).prepend(2);
         let first_map = Chunk::FlatMap(Rc::new(chunk), Rc::new(|x| Chunk::new().prepend(x * 2)));
-        let nested_map = Chunk::FlatMap(
-            Rc::new(first_map),
-            Rc::new(|x| Chunk::new().prepend(x + 1)),
-        );
-        assert_eq!(nested_map.as_vec(), vec![3, 5]);
+        let nested_map =
+            Chunk::FlatMap(Rc::new(first_map), Rc::new(|x| Chunk::new().prepend(x + 1)));
+        assert_eq!(nested_map.as_vec(), vec![5, 3]);
     }
 }
