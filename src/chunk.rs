@@ -484,8 +484,8 @@ mod tests {
 
         // Test mixing prepend and append
         let mixed = Chunk::default()
-            .prepend(1)  // [1]
-            .append(2)   // [1, 2]
+            .prepend(1) // [1]
+            .append(2) // [1, 2]
             .prepend(3); // [3, 1, 2]
         assert_eq!(mixed.as_vec(), vec![3, 1, 2]);
     }
