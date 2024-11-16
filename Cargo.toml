@@ -2,6 +2,10 @@
 name = "tailcall-chunk"
 version = "0.2.0"
 edition = "2021"
+license = "Apache-2.0"
+description = "A Rust implementation of a persistent data structure for efficient append and concatenation operations."
+repository = "https://github.com/tusharmath/tailcall-chunk"
+documentation = "https://docs.rs/tailcall-chunk"
 
 [dependencies]
 
