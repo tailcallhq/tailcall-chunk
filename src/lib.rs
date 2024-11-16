@@ -17,7 +17,7 @@
 //! let chunk2 = Chunk::new().append(3).append(4);
 //! let combined = chunk1.concat(chunk2);
 //!
-//! assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+//! assert_eq!(combined.as_vec(), vec![&3, &4, &1, &2]);
 //! ```
 
 use std::rc::Rc;
@@ -51,7 +51,7 @@ use std::rc::Rc;
 /// let other_chunk = Chunk::new().append(3).append(4);
 /// let combined = chunk.concat(other_chunk);
 ///
-/// assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+/// assert_eq!(combined.as_vec(), vec![&3, &4, &1, &2]);
 /// ```
 ///
 /// # References
@@ -138,7 +138,7 @@ impl<A> Chunk<A> {
     /// let chunk1 = Chunk::new().append(1).append(2);
     /// let chunk2 = Chunk::new().append(3).append(4);
     /// let combined = chunk1.concat(chunk2);
-    /// assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+    /// assert_eq!(combined.as_vec(), vec![&3, &4, &1, &2]);
     /// ```
     pub fn concat(self, other: Chunk<A>) -> Self {
         if self.is_null() {
