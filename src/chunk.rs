@@ -57,7 +57,7 @@ use std::rc::Rc;
 /// # References
 /// - [Persistent Data Structures](https://en.wikipedia.org/wiki/Persistent_data_structure)
 /// - [Structural Sharing](https://hypirion.com/musings/understanding-persistent-vector-pt-1)
-#[derive(Hash, Eq, PartialEq, Debug, Clone)]
+#[derive(Clone)]
 pub enum Chunk<A> {
     /// Represents an empty chunk
     Empty,
@@ -65,6 +65,8 @@ pub enum Chunk<A> {
     Prepend(A, Rc<Chunk<A>>),
     /// Represents the concatenation of two chunks
     Concat(Rc<Chunk<A>>, Rc<Chunk<A>>),
+    /// Represents a lazy mapping of elements
+    FlatMap(Rc<Chunk<A>>, Rc<dyn Fn(A) -> Chunk<A>>),
 }
 
 impl<A> Default for Chunk<A> {
@@ -150,6 +152,63 @@ impl<A> Chunk<A> {
         Self::Concat(Rc::new(self), Rc::new(other))
     }
 
+    /// Transforms each element in the chunk using the provided function.
+    ///
+    /// This method creates a lazy representation of the transformation without actually
+    /// performing it. The transformation is only executed when [`as_vec`](Chunk::as_vec)
+    /// or [`as_vec_mut`](Chunk::as_vec_mut) is called.
+    ///
+    /// # Performance
+    /// - Creating the transformation: O(1)
+    /// - Executing the transformation (during [`as_vec`](Chunk::as_vec)): O(n)
+    ///
+    /// # Arguments
+    /// * `f` - A function that takes a reference to an element of type `A` and returns
+    ///         a new element of type `A`
+    ///
+    /// # Examples
+    /// ```
+    /// use tailcall_chunk::Chunk;
+    ///
+    /// let chunk = Chunk::new().prepend(1).prepend(2).prepend(3);
+    /// // This operation is O(1) and doesn't actually transform the elements
+    /// let doubled = chunk.transform(|x| x * 2);
+    /// // The transformation happens here, when we call as_vec()
+    /// assert_eq!(doubled.as_vec(), vec![&6, &4, &2]);
+    /// ```
+    pub fn transform(self, f: impl Fn(A) -> A + 'static) -> Self {
+        self.transform_flatten(move |a| Chunk::new().prepend(f(a)))
+    }
+
+    /// Transforms each element in the chunk into a new chunk using the provided function,
+    /// then flattens the results.
+    ///
+    /// This method creates a lazy representation of the transformation without actually
+    /// performing it. The transformation is only executed when [`as_vec`](Chunk::as_vec)
+    /// or [`as_vec_mut`](Chunk::as_vec_mut) is called.
+    ///
+    /// # Performance
+    /// - Creating the transformation: O(1)
+    /// - Executing the transformation (during [`as_vec`](Chunk::as_vec)): O(n)
+    ///
+    /// # Arguments
+    /// * `f` - A function that takes an element of type `A` and returns a new
+    ///         [`Chunk`] containing elements of type `A`
+    ///
+    /// # Examples
+    /// ```
+    /// use tailcall_chunk::Chunk;
+    ///
+    /// let chunk = Chunk::new().prepend(1).prepend(2);
+    /// // This operation is O(1) and doesn't actually transform the elements
+    /// let duplicated = chunk.transform_flatten(|x| Chunk::new().prepend(x).prepend(x));
+    /// // The transformation happens here, when we call as_vec()
+    /// assert_eq!(duplicated.as_vec(), vec![&2, &2, &1, &1]);
+    /// ```
+    pub fn transform_flatten(self, f: impl Fn(A) -> Chunk<A> + 'static) -> Chunk<A> {
+        Chunk::FlatMap(Rc::new(self), Rc::new(f))
+    }
+
     /// Converts the chunk into a vector of references to its elements.
     ///
     /// This operation has O(n) complexity where n is the number of elements
@@ -162,7 +221,10 @@ impl<A> Chunk<A> {
     /// let chunk = Chunk::new().prepend(1).prepend(2).prepend(3);
     /// assert_eq!(chunk.as_vec(), vec![&1, &2, &3]);
     /// ```
-    pub fn as_vec(&self) -> Vec<&A> {
+    pub fn as_vec(&self) -> Vec<A>
+    where
+        A: Clone,
+    {
         let mut vec = Vec::new();
         self.as_vec_mut(&mut vec);
         vec
@@ -176,16 +238,27 @@ impl<A> Chunk<A> {
     /// # Arguments
     /// * `buf` - A mutable reference to a vector that will be populated with
     ///           references to the chunk's elements
-    pub fn as_vec_mut<'a>(&'a self, buf: &mut Vec<&'a A>) {
+    pub fn as_vec_mut<'a>(&'a self, buf: &mut Vec<A>)
+    where
+        A: Clone,
+    {
         match self {
             Chunk::Empty => {}
             Chunk::Prepend(a, rest) => {
+                buf.push(a.clone());
                 rest.as_vec_mut(buf);
-                buf.push(a);
             }
             Chunk::Concat(a, b) => {
-                b.as_vec_mut(buf);
                 a.as_vec_mut(buf);
+                b.as_vec_mut(buf);
+            }
+            Chunk::FlatMap(a, f) => {
+                let mut buf2 = Vec::new();
+                a.as_vec_mut(&mut buf2);
+                for elem in buf2 {
+                    let mapped = f(elem);
+                    mapped.as_vec_mut(buf);
+                }
             }
         }
     }
@@ -219,13 +292,13 @@ mod tests {
     #[test]
     fn test_prepend() {
         let chunk = Chunk::new().prepend(1).prepend(2).prepend(3);
-        assert_eq!(chunk.as_vec(), vec![&1, &2, &3]);
+        assert_eq!(chunk.as_vec(), vec![&3, &2, &1]);
 
         // Test that original chunk remains unchanged (persistence)
         let chunk1 = Chunk::new().prepend(1);
         let chunk2 = chunk1.clone().prepend(2);
         assert_eq!(chunk1.as_vec(), vec![&1]);
-        assert_eq!(chunk2.as_vec(), vec![&1, &2]);
+        assert_eq!(chunk2.as_vec(), vec![&2, &1]);
     }
 
     #[test]
@@ -234,7 +307,7 @@ mod tests {
         let chunk2 = Chunk::new().prepend(3).prepend(4);
         let combined = chunk1.clone().concat(chunk2.clone());
 
-        assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+        assert_eq!(combined.as_vec(), vec![&2, &1, &4, &3]);
 
         // Test concatenation with empty chunks
         let empty = Chunk::new();
@@ -261,13 +334,13 @@ mod tests {
 
         // Test multiple elements
         let multiple = Chunk::new().prepend(1).prepend(2).prepend(3);
-        assert_eq!(multiple.as_vec(), vec![&1, &2, &3]);
+        assert_eq!(multiple.as_vec(), vec![&3, &2, &1]);
 
         // Test complex structure with concatenation
         let chunk1 = Chunk::new().prepend(1).prepend(2);
         let chunk2 = Chunk::new().prepend(3).prepend(4);
         let complex = chunk1.concat(chunk2);
-        assert_eq!(complex.as_vec(), vec![&1, &2, &3, &4]);
+        assert_eq!(complex.as_vec(), vec![&2, &1, &4, &3]);
     }
 
     #[test]
@@ -297,5 +370,30 @@ mod tests {
         // Test with boolean values
         let bool_chunk = Chunk::new().prepend(true).prepend(false).prepend(true);
         assert_eq!(bool_chunk.as_vec(), vec![&true, &false, &true]);
+    }
+
+    #[test]
+    fn test_flat_map() {
+        // Test basic flat_map functionality
+        let chunk = Chunk::new().prepend(1).prepend(2);
+        let mapped = Chunk::FlatMap(
+            Rc::new(chunk),
+            Rc::new(|x| Chunk::new().prepend(*x * 2).prepend(*x)),
+        );
+        assert_eq!(mapped.as_vec(), vec![&2, &4, &2, &1]);
+
+        // Test flat_map with empty chunk
+        let empty: Chunk<i32> = Chunk::new();
+        let mapped_empty = Chunk::FlatMap(Rc::new(empty), Rc::new(|x| Chunk::new().prepend(*x)));
+        assert_eq!(mapped_empty.as_vec(), Vec::<i32>::new());
+
+        // Test nested flat_map
+        let chunk = Chunk::new().prepend(1).prepend(2);
+        let first_map = Chunk::FlatMap(Rc::new(chunk), Rc::new(|x| Chunk::new().prepend(*x * 2)));
+        let nested_map = Chunk::FlatMap(
+            Rc::new(first_map),
+            Rc::new(|x| Chunk::new().prepend(*x + 1)),
+        );
+        assert_eq!(nested_map.as_vec(), vec![&3, &5]);
     }
 }
