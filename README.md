@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/chunk)](https://crates.io/crates/chunk)
 [![Documentation](https://docs.rs/chunk/badge.svg)](https://docs.rs/chunk)
-[![Build Status](https://github.com/username/chunk/workflows/CI/badge.svg)](https://github.com/username/chunk/actions)
+[![Build Status](https://github.com/tailcallhq/tailcall-chunk/workflows/CI/badge.svg)](https://github.com/tailcallhq/tailcall-chunk/actions)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 
 A Rust implementation of a persistent data structure that provides O(1) append and concatenation operations through structural sharing.
