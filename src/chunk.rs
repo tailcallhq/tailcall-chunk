@@ -17,7 +17,7 @@
 //! let chunk2 = Chunk::default().append(3).append(4);
 //! let combined = chunk1.concat(chunk2);
 //!
-//! assert_eq!(combined.as_vec(), vec![2, 1, 4, 3]);
+//! assert_eq!(combined.as_vec(), vec![1, 2, 3, 4]);
 //! ```
 
 use std::rc::Rc;
@@ -51,7 +51,7 @@ use std::rc::Rc;
 /// let other_chunk = Chunk::default().append(3).append(4);
 /// let combined = chunk.concat(other_chunk);
 ///
-/// assert_eq!(combined.as_vec(), vec![2,1, 4, 3]);
+/// assert_eq!(combined.as_vec(), vec![1, 2, 3, 4]);
 /// ```
 ///
 /// # References
@@ -120,7 +120,7 @@ impl<A> Chunk<A> {
     /// use tailcall_chunk::Chunk;
     ///
     /// let chunk = Chunk::default().append(1).append(2);
-    /// assert_eq!(chunk.as_vec(), vec![2, 1]);
+    /// assert_eq!(chunk.as_vec(), vec![1, 2]);
     /// ```
     pub fn append(self, a: A) -> Self {
         Chunk::Append(a, Rc::new(self))
@@ -142,7 +142,7 @@ impl<A> Chunk<A> {
     /// let chunk1 = Chunk::default().append(1).append(2);
     /// let chunk2 = Chunk::default().append(3).append(4);
     /// let combined = chunk1.concat(chunk2);
-    /// assert_eq!(combined.as_vec(), vec![2,1, 4,3]);
+    /// assert_eq!(combined.as_vec(), vec![1, 2, 3, 4]);
     /// ```
     pub fn concat(self, other: Chunk<A>) -> Chunk<A> {
         if self.is_null() {
@@ -176,7 +176,7 @@ impl<A> Chunk<A> {
     /// // This operation is O(1) and doesn't actually transform the elements
     /// let doubled = chunk.transform(|x| x * 2);
     /// // The transformation happens here, when we call as_vec()
-    /// assert_eq!(doubled.as_vec(), vec![6, 4, 2]);
+    /// assert_eq!(doubled.as_vec(), vec![2, 4, 6]);
     /// ```
     pub fn transform(self, f: impl Fn(A) -> A + 'static) -> Self {
         self.transform_flatten(move |a| Chunk::new(f(a)))
@@ -200,10 +200,10 @@ impl<A> Chunk<A> {
     /// ```
     /// use tailcall_chunk::Chunk;
     ///
-    /// let chunk = Chunk::default().append(2).append(1);
+    /// let chunk = Chunk::default().append(1).append(2);
     /// // Transform each number x into a chunk containing [x, x+1]
     /// let expanded = chunk.transform_flatten(|x| {
-    ///     Chunk::default().append(x + 1).append(x)
+    ///     Chunk::default().append(x).append(x + 1)
     /// });
     /// assert_eq!(expanded.as_vec(), vec![1, 2, 2, 3]);
     /// ```
@@ -221,7 +221,7 @@ impl<A> Chunk<A> {
     /// use tailcall_chunk::Chunk;
     ///
     /// let chunk = Chunk::default().append(1).append(2).append(3);
-    /// assert_eq!(chunk.as_vec(), vec![3, 2, 1]);
+    /// assert_eq!(chunk.as_vec(), vec![1, 2, 3]);
     /// ```
     pub fn as_vec(&self) -> Vec<A>
     where

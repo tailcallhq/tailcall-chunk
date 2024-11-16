@@ -30,12 +30,12 @@ chunk = "0.1.0"
 use chunk::Chunk;
 
 // Create a new chunk and append some elements
-let chunk1 = Chunk::new()
+let chunk1 = Chunk::default()
     .append(1)
     .append(2);
 
 // Create another chunk
-let chunk2 = Chunk::new()
+let chunk2 = Chunk::default()
     .append(3)
     .append(4);
 
@@ -43,7 +43,7 @@ let chunk2 = Chunk::new()
 let combined = chunk1.concat(chunk2);
 
 // Convert to vector when needed
-assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+assert_eq!(combined.as_vec(), vec![1, 2, 3, 4]);
 ```
 
 ## Detailed Usage
@@ -59,7 +59,7 @@ struct Person {
     age: u32,
 }
 
-let people = Chunk::new()
+let people = Chunk::default()
     .append(Person {
         name: "Alice".to_string(),
         age: 30
@@ -72,6 +72,7 @@ let people = Chunk::new()
 // Access elements
 let people_vec = people.as_vec();
 assert_eq!(people_vec[0].name, "Alice");
+assert_eq!(people_vec[1].name, "Bob");
 ```
 
 ### Memory Efficiency
@@ -85,20 +86,22 @@ The `Chunk` type uses structural sharing through reference counting (`Rc`), whic
 ```rust
 use chunk::Chunk;
 
-let original = Chunk::new().append(1).append(2);
+let original = Chunk::default().append(1).append(2);
 let version1 = original.clone().append(3);  // Efficient cloning
 let version2 = original.clone().append(4);  // Both versions share data
 ```
 
 ## Performance Characteristics
 
-| Operation  | Time Complexity | Space Complexity |
-| ---------- | --------------- | ---------------- |
-| `new()`    | O(1)            | O(1)             |
-| `append()` | O(1)            | O(1)             |
-| `concat()` | O(1)            | O(1)             |
-| `as_vec()` | O(n)            | O(n)             |
-| `clone()`  | O(1)            | O(1)             |
+| Operation             | Time Complexity | Space Complexity |
+| --------------------- | --------------- | ---------------- |
+| `new()`               | O(1)            | O(1)             |
+| `append()`            | O(1)            | O(1)             |
+| `concat()`            | O(1)            | O(1)             |
+| `transform()`         | O(1)            | O(1)             |
+| `transform_flatten()` | O(1)            | O(1)             |
+| `as_vec()`            | O(n)            | O(n)             |
+| `clone()`             | O(1)            | O(1)             |
 
 ## Implementation Details
 
