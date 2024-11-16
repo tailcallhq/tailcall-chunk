@@ -247,8 +247,8 @@ impl<A> Chunk<A> {
         match self {
             Chunk::Empty => {}
             Chunk::Append(a, rest) => {
-                buf.push(a.clone());
                 rest.as_vec_mut(buf);
+                buf.push(a.clone());
             }
             Chunk::Concat(a, b) => {
                 a.as_vec_mut(buf);
@@ -257,7 +257,7 @@ impl<A> Chunk<A> {
             Chunk::TransformFlatten(a, f) => {
                 let mut tmp = Vec::new();
                 a.as_vec_mut(&mut tmp);
-                for elem in tmp.into_iter().rev() {
+                for elem in tmp.into_iter() {
                     f(elem).as_vec_mut(buf);
                 }
             }
@@ -421,14 +421,14 @@ mod tests {
         // Test expanding each element into multiple elements
         let numbers = Chunk::default().append(1).append(2);
         let expanded = numbers.transform_flatten(|x| Chunk::default().append(x + 1).append(x));
-        assert_eq!(expanded.as_vec(), vec![1, 2, 2, 3]);
+        assert_eq!(expanded.as_vec(), vec![2, 1, 3, 2]);
 
         // Test with nested chunks
         let chunk = Chunk::default().append(1).append(2).append(3);
         let nested = chunk.transform_flatten(|x| {
             if x % 2 == 0 {
                 // Even numbers expand to [x, x+1]
-                Chunk::default().append(x + 1).append(x)
+                Chunk::default().append(x).append(x + 1)
             } else {
                 // Odd numbers expand to [x]
                 Chunk::new(x)
@@ -437,10 +437,10 @@ mod tests {
         assert_eq!(nested.as_vec(), vec![1, 2, 3, 3]);
 
         // Test chaining transform_flatten operations
-        let numbers = Chunk::default().append(2).append(1);
+        let numbers = Chunk::default().append(1).append(2);
         let result = numbers
             .transform_flatten(|x| Chunk::default().append(x).append(x))
-            .transform_flatten(|x| Chunk::default().append(x + 1).append(x));
+            .transform_flatten(|x| Chunk::default().append(x).append(x + 1));
         assert_eq!(result.as_vec(), vec![1, 2, 1, 2, 2, 3, 2, 3]);
 
         // Test with empty chunk results
