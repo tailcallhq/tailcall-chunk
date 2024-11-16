@@ -126,6 +126,22 @@ impl<A> Chunk<A> {
         Chunk::Append(a, Rc::new(self))
     }
 
+    /// Prepend a new element to the beginning of the chunk.
+    ///
+    /// This operation has O(1) complexity as it creates a new `Concat` variant
+    /// that references the existing chunk through an [`Rc`].
+    ///
+    /// # Examples
+    /// ```
+    /// use tailcall_chunk::Chunk;
+    ///
+    /// let chunk = Chunk::default().prepend(1).prepend(2);
+    /// assert_eq!(chunk.as_vec(), vec![2, 1]);
+    /// ```
+    pub fn prepend(self, a: A) -> Self {
+        Chunk::new(a).concat(self)
+    }
+
     /// Concatenates this chunk with another chunk.
     ///
     /// This operation has O(1) complexity as it creates a new `Concat` variant
@@ -453,5 +469,24 @@ mod tests {
             }
         });
         assert_eq!(filtered.as_vec(), vec![2]);
+    }
+
+    #[test]
+    fn test_prepend() {
+        let chunk = Chunk::default().prepend(1).prepend(2).prepend(3);
+        assert_eq!(chunk.as_vec(), vec![3, 2, 1]);
+
+        // Test that original chunk remains unchanged (persistence)
+        let chunk1 = Chunk::default().prepend(1);
+        let chunk2 = chunk1.clone().prepend(2);
+        assert_eq!(chunk1.as_vec(), vec![1]);
+        assert_eq!(chunk2.as_vec(), vec![2, 1]);
+
+        // Test mixing prepend and append
+        let mixed = Chunk::default()
+            .prepend(1)  // [1]
+            .append(2)   // [1, 2]
+            .prepend(3); // [3, 1, 2]
+        assert_eq!(mixed.as_vec(), vec![3, 1, 2]);
     }
 }
