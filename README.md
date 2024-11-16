@@ -15,6 +15,44 @@ A Rust implementation of a persistent data structure that provides O(1) append a
 - **Memory Efficient**: Uses structural sharing via reference counting
 - **Safe Rust**: Implemented using 100% safe Rust
 
+## Theoretical Background
+
+This implementation is inspired by the concepts presented in Hinze and Paterson's work on Finger Trees[^1], though simplified for our specific use case. While our implementation differs in structure, it shares similar performance goals and theoretical foundations.
+
+### Relationship to Finger Trees
+
+Finger Trees are a functional data structure that supports:
+
+- Access to both ends in amortized constant time
+- Concatenation in logarithmic time
+- Persistence through structural sharing
+
+Our `Chunk` implementation achieves similar goals through a simplified approach:
+
+- We use `Append` nodes for constant-time additions
+- The `Concat` variant enables efficient concatenation
+- `Rc` (Reference Counting) provides persistence and structural sharing
+
+Like Finger Trees, our structure can be viewed as an extension of Okasaki's implicit deques[^2], but optimized for our specific use cases. While Finger Trees offer a more general-purpose solution with additional capabilities, our implementation focuses on providing:
+
+- Simpler implementation
+- More straightforward mental model
+- Specialized performance characteristics for append/concat operations
+
+### Performance Trade-offs
+
+While Finger Trees achieve logarithmic time for concatenation, our implementation optimizes for constant-time operations through lazy evaluation. This means:
+
+- Append and concatenation are always O(1)
+- The cost is deferred to when we need to materialize the sequence (via `as_vec()`)
+- Memory usage grows with the number of operations until materialization
+
+This trade-off is particularly beneficial in scenarios where:
+
+- Multiple transformations are chained
+- Not all elements need to be materialized
+- Structural sharing can be leveraged across operations
+
 ## Installation
 
 Add this to your `Cargo.toml`:
@@ -157,3 +195,8 @@ at your option.
 - Basic chunk implementation with O(1) append and concat operations
 - Full documentation and examples
 - Complete test coverage
+
+## References
+
+[^1]: Ralf Hinze and Ross Paterson. "Finger Trees: A Simple General-purpose Data Structure", Journal of Functional Programming 16(2):197-217, 2006.
+[^2]: Chris Okasaki. "Purely Functional Data Structures", Cambridge University Press, 1998.
