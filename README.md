@@ -1,9 +1,9 @@
 # Chunk
 
-[![Crates.io](https://img.shields.io/crates/v/chunk)](https://crates.io/crates/chunk)
-[![Documentation](https://docs.rs/chunk/badge.svg)](https://docs.rs/chunk)
-[![Build Status](https://github.com/username/chunk/workflows/CI/badge.svg)](https://github.com/username/chunk/actions)
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+[![Crates.io Version](https://img.shields.io/crates/v/tailcall-chunk?style=flat-square)](https://crates.io/crates/tailcall-chunk)
+[![Documentation](https://img.shields.io/docsrs/tailcall-chunk?style=flat-square)](https://docs.rs/tailcall-chunk)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/tailcallhq/tailcall-chunk/ci.yml?style=flat-square)](https://github.com/tailcallhq/tailcall-chunk/actions)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue?style=flat-square)](LICENSE)
 
 A Rust implementation of a persistent data structure that provides O(1) append and concatenation operations through structural sharing.
 
@@ -14,6 +14,44 @@ A Rust implementation of a persistent data structure that provides O(1) append a
 - **Immutable/Persistent**: All operations create new versions while preserving the original
 - **Memory Efficient**: Uses structural sharing via reference counting
 - **Safe Rust**: Implemented using 100% safe Rust
+
+## Theoretical Background
+
+This implementation is inspired by the concepts presented in Hinze and Paterson's work on Finger Trees[^1], though simplified for our specific use case. While our implementation differs in structure, it shares similar performance goals and theoretical foundations.
+
+### Relationship to Finger Trees
+
+Finger Trees are a functional data structure that supports:
+
+- Access to both ends in amortized constant time
+- Concatenation in logarithmic time
+- Persistence through structural sharing
+
+Our `Chunk` implementation achieves similar goals through a simplified approach:
+
+- We use `Append` nodes for constant-time additions
+- The `Concat` variant enables efficient concatenation
+- `Rc` (Reference Counting) provides persistence and structural sharing
+
+Like Finger Trees, our structure can be viewed as an extension of Okasaki's implicit deques[^2], but optimized for our specific use cases. While Finger Trees offer a more general-purpose solution with additional capabilities, our implementation focuses on providing:
+
+- Simpler implementation
+- More straightforward mental model
+- Specialized performance characteristics for append/concat operations
+
+### Performance Trade-offs
+
+While Finger Trees achieve logarithmic time for concatenation, our implementation optimizes for constant-time operations through lazy evaluation. This means:
+
+- Append and concatenation are always O(1)
+- The cost is deferred to when we need to materialize the sequence (via `as_vec()`)
+- Memory usage grows with the number of operations until materialization
+
+This trade-off is particularly beneficial in scenarios where:
+
+- Multiple transformations are chained
+- Not all elements need to be materialized
+- Structural sharing can be leveraged across operations
 
 ## Installation
 
@@ -30,12 +68,12 @@ chunk = "0.1.0"
 use chunk::Chunk;
 
 // Create a new chunk and append some elements
-let chunk1 = Chunk::new()
+let chunk1 = Chunk::default()
     .append(1)
     .append(2);
 
 // Create another chunk
-let chunk2 = Chunk::new()
+let chunk2 = Chunk::default()
     .append(3)
     .append(4);
 
@@ -43,7 +81,7 @@ let chunk2 = Chunk::new()
 let combined = chunk1.concat(chunk2);
 
 // Convert to vector when needed
-assert_eq!(combined.as_vec(), vec![&1, &2, &3, &4]);
+assert_eq!(combined.as_vec(), vec![1, 2, 3, 4]);
 ```
 
 ## Detailed Usage
@@ -59,7 +97,7 @@ struct Person {
     age: u32,
 }
 
-let people = Chunk::new()
+let people = Chunk::default()
     .append(Person {
         name: "Alice".to_string(),
         age: 30
@@ -72,6 +110,7 @@ let people = Chunk::new()
 // Access elements
 let people_vec = people.as_vec();
 assert_eq!(people_vec[0].name, "Alice");
+assert_eq!(people_vec[1].name, "Bob");
 ```
 
 ### Memory Efficiency
@@ -85,33 +124,36 @@ The `Chunk` type uses structural sharing through reference counting (`Rc`), whic
 ```rust
 use chunk::Chunk;
 
-let original = Chunk::new().append(1).append(2);
+let original = Chunk::default().append(1).append(2);
 let version1 = original.clone().append(3);  // Efficient cloning
 let version2 = original.clone().append(4);  // Both versions share data
 ```
 
 ## Performance Characteristics
 
-| Operation  | Time Complexity | Space Complexity |
-| ---------- | --------------- | ---------------- |
-| `new()`    | O(1)            | O(1)             |
-| `append()` | O(1)            | O(1)             |
-| `concat()` | O(1)            | O(1)             |
-| `as_vec()` | O(n)            | O(n)             |
-| `clone()`  | O(1)            | O(1)             |
+| Operation             | Time Complexity | Space Complexity |
+| --------------------- | --------------- | ---------------- |
+| `new()`               | O(1)            | O(1)             |
+| `append()`            | O(1)            | O(1)             |
+| `concat()`            | O(1)            | O(1)             |
+| `transform()`         | O(1)            | O(1)             |
+| `transform_flatten()` | O(1)            | O(1)             |
+| `as_vec()`            | O(n)            | O(n)             |
+| `clone()`             | O(1)            | O(1)             |
 
 ## Implementation Details
 
-The `Chunk<A>` type is implemented as an enum with three variants:
+The `Chunk<A>` type is implemented as an enum with four variants:
 
 - `Empty`: Represents an empty chunk
 - `Append`: Represents a single element appended to another chunk
 - `Concat`: Represents the concatenation of two chunks
+- `TransformFlatten`: Represents a lazy transformation and flattening of elements
 
 The data structure achieves its performance characteristics through:
 
 - Structural sharing using `Rc`
-- Lazy evaluation of concatenation
+- Lazy evaluation of concatenation and transformations
 - Immutable operations that preserve previous versions
 
 ## Contributing
@@ -140,16 +182,7 @@ This project is licensed under either of
 
 at your option.
 
-## References and Further Reading
+## References
 
-- [Persistent Data Structures](https://en.wikipedia.org/wiki/Persistent_data_structure)
-- [Understanding Persistent Vector - Part 1](https://hypirion.com/musings/understanding-persistent-vector-pt-1)
-- [Structural Sharing in Functional Programming](https://hypirion.com/musings/understanding-persistent-vector-pt-1)
-
-## Changelog
-
-### 0.1.0 (Initial Release)
-
-- Basic chunk implementation with O(1) append and concat operations
-- Full documentation and examples
-- Complete test coverage
+[^1]: Ralf Hinze and Ross Paterson. "Finger Trees: A Simple General-purpose Data Structure", Journal of Functional Programming 16(2):197-217, 2006.
+[^2]: Chris Okasaki. "Purely Functional Data Structures", Cambridge University Press, 1998.

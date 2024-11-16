@@ -1,9 +1,13 @@
 [package]
 name = "tailcall-chunk"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+license = "Apache-2.0"
+description = "A Rust implementation of a persistent data structure for efficient append and concatenation operations."
+repository = "https://github.com/tailcallhq/tailcall-chunk"
+documentation = "https://docs.rs/tailcall-chunk"
 
 [dependencies]
 
-[build-dependencies]
+[dev-dependencies]
 gh-workflow = "0.4"
