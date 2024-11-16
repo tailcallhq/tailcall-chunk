@@ -105,16 +105,17 @@ let version2 = original.clone().append(4);  // Both versions share data
 
 ## Implementation Details
 
-The `Chunk<A>` type is implemented as an enum with three variants:
+The `Chunk<A>` type is implemented as an enum with four variants:
 
 - `Empty`: Represents an empty chunk
 - `Append`: Represents a single element appended to another chunk
 - `Concat`: Represents the concatenation of two chunks
+- `TransformFlatten`: Represents a lazy transformation and flattening of elements
 
 The data structure achieves its performance characteristics through:
 
 - Structural sharing using `Rc`
-- Lazy evaluation of concatenation
+- Lazy evaluation of concatenation and transformations
 - Immutable operations that preserve previous versions
 
 ## Contributing
