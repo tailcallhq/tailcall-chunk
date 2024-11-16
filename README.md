@@ -182,20 +182,6 @@ This project is licensed under either of
 
 at your option.
 
-## References and Further Reading
-
-- [Persistent Data Structures](https://en.wikipedia.org/wiki/Persistent_data_structure)
-- [Understanding Persistent Vector - Part 1](https://hypirion.com/musings/understanding-persistent-vector-pt-1)
-- [Structural Sharing in Functional Programming](https://hypirion.com/musings/understanding-persistent-vector-pt-1)
-
-## Changelog
-
-### 0.1.0 (Initial Release)
-
-- Basic chunk implementation with O(1) append and concat operations
-- Full documentation and examples
-- Complete test coverage
-
 ## References
 
 [^1]: Ralf Hinze and Ross Paterson. "Finger Trees: A Simple General-purpose Data Structure", Journal of Functional Programming 16(2):197-217, 2006.
