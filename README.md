@@ -59,7 +59,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-chunk = "0.1.0"
+tailcall-chunk = "0.1.0"
 ```
 
 ## Quick Start
