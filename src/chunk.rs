@@ -67,8 +67,8 @@ pub enum Chunk<A> {
     /// Represents the concatenation of two chunks
     Concat(Rc<Chunk<A>>, Rc<Chunk<A>>),
 
-    /// Represents a lazy mapping of elements
-    Map(Rc<Chunk<A>>, Rc<dyn Fn(A) -> A>),
+    /// Represents a lazy transformation of elements
+    Transform(Rc<Chunk<A>>, Rc<dyn Fn(A) -> A>),
 }
 
 impl<A> Default for Chunk<A> {
@@ -179,7 +179,7 @@ impl<A> Chunk<A> {
     /// assert_eq!(doubled.as_vec(), vec![6, 4, 2]);
     /// ```
     pub fn transform(self, f: impl Fn(A) -> A + 'static) -> Self {
-        Chunk::Map(Rc::new(self), Rc::new(f))
+        Chunk::Transform(Rc::new(self), Rc::new(f))
     }
 
     /// Converts the chunk into a vector of references to its elements.
@@ -225,7 +225,7 @@ impl<A> Chunk<A> {
                 a.as_vec_mut(buf);
                 b.as_vec_mut(buf);
             }
-            Chunk::Map(a, f) => {
+            Chunk::Transform(a, f) => {
                 let mut tmp = Vec::new();
                 a.as_vec_mut(&mut tmp);
                 for elem in tmp {
@@ -342,5 +342,38 @@ mod tests {
         // Test with boolean values
         let bool_chunk = Chunk::default().prepend(true).prepend(false).prepend(true);
         assert_eq!(bool_chunk.as_vec(), vec![true, false, true]);
+    }
+
+    #[test]
+    fn test_transform() {
+        // Test transform on empty chunk
+        let empty: Chunk<i32> = Chunk::default();
+        let transformed_empty = empty.transform(|x| x * 2);
+        assert_eq!(transformed_empty.as_vec(), Vec::<i32>::new());
+
+        // Test transform on single element
+        let single = Chunk::default().prepend(5);
+        let doubled = single.transform(|x| x * 2);
+        assert_eq!(doubled.as_vec(), vec![10]);
+
+        // Test transform on multiple elements
+        let multiple = Chunk::default().prepend(3).prepend(2).prepend(1);
+        let doubled = multiple.transform(|x| x * 2);
+        assert_eq!(doubled.as_vec(), vec![2, 4, 6]);
+
+        // Test transform with string manipulation
+        let string_chunk = Chunk::default()
+            .prepend(String::from("hello"))
+            .prepend(String::from("world"));
+        let uppercase = string_chunk.transform(|s| s.to_uppercase());
+        assert_eq!(uppercase.as_vec(), vec!["WORLD", "HELLO"]);
+
+        // Test chaining multiple transforms
+        let numbers = Chunk::default().prepend(1).prepend(2).prepend(3);
+        let result = numbers
+            .transform(|x| x * 2)
+            .transform(|x| x + 1)
+            .transform(|x| x * 3);
+        assert_eq!(result.as_vec(), vec![21, 15, 9]);
     }
 }
