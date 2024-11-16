@@ -11,7 +11,7 @@
 //!
 //! # Example
 //! ```
-//! use your_crate_name::Chunk;
+//! use tailcall_chunk::Chunk;
 //!
 //! let chunk1 = Chunk::new().append(1).append(2);
 //! let chunk2 = Chunk::new().append(3).append(4);
@@ -42,7 +42,7 @@ use std::rc::Rc;
 ///
 /// # Examples
 /// ```
-/// use your_crate_name::Chunk;
+/// use tailcall_chunk::Chunk;
 ///
 /// let mut chunk = Chunk::new();
 /// chunk = chunk.append(1);
@@ -81,7 +81,7 @@ impl<A> Chunk<A> {
     ///
     /// # Examples
     /// ```
-    /// use your_crate_name::Chunk;
+    /// use tailcall_chunk::Chunk;
     ///
     /// let chunk: Chunk<i32> = Chunk::new();
     /// assert!(chunk.is_null());
@@ -94,7 +94,7 @@ impl<A> Chunk<A> {
     ///
     /// # Examples
     /// ```
-    /// use your_crate_name::Chunk;
+    /// use tailcall_chunk::Chunk;
     ///
     /// let chunk: Chunk<i32> = Chunk::new();
     /// assert!(chunk.is_null());
@@ -113,7 +113,7 @@ impl<A> Chunk<A> {
     ///
     /// # Examples
     /// ```
-    /// use your_crate_name::Chunk;
+    /// use tailcall_chunk::Chunk;
     ///
     /// let chunk = Chunk::new().append(1).append(2);
     /// assert_eq!(chunk.as_vec(), vec![&1, &2]);
@@ -133,7 +133,7 @@ impl<A> Chunk<A> {
     ///
     /// # Examples
     /// ```
-    /// use your_crate_name::Chunk;
+    /// use tailcall_chunk::Chunk;
     ///
     /// let chunk1 = Chunk::new().append(1).append(2);
     /// let chunk2 = Chunk::new().append(3).append(4);
@@ -157,7 +157,7 @@ impl<A> Chunk<A> {
     ///
     /// # Examples
     /// ```
-    /// use your_crate_name::Chunk;
+    /// use tailcall_chunk::Chunk;
     ///
     /// let chunk = Chunk::new().append(1).append(2).append(3);
     /// assert_eq!(chunk.as_vec(), vec![&1, &2, &3]);
