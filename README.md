@@ -145,12 +145,12 @@ let version2 = original.clone().append(4);  // Both versions share data
 
 The following table compares the actual performance of Chunk vs Vector operations based on [our benchmarks](benches/operations.rs) (lower is better):
 
-| Operation | Chunk Performance | Vector Performance | Notes                                    |
-| --------- | ----------------- | ------------------ | ---------------------------------------- |
-| Append    | 57.48 µs          | 815.47 ns          | Vector is ~70x faster for single appends |
-| Prepend   | 160.65 µs         | 30.92 µs           | Vector is ~5x faster for single prepends |
-| Concat    | 68.27 ns          | 130.43 ns          | Chunk is ~2x faster for concatenation    |
-| Clone     | 4.06 ns           | 75.19 ns           | Chunk is ~18x faster for cloning         |
+| Operation | Chunk Performance | Vector Performance | Notes                                     |
+| --------- | ----------------- | ------------------ | ----------------------------------------- |
+| Append    | 1.08 ms           | 561.37 µs          | Vector is ~2x faster for single appends   |
+| Prepend   | 2.26 ms           | 22.13 ms           | Chunk is ~10x faster for single prepends  |
+| Concat    | 169.76 ns         | 491.55 µs          | Chunk is ~2,900x faster for concatenation |
+| Clone     | 4.11 ns           | 1.35 µs            | Chunk is ~330x faster for cloning         |
 
 Note: These benchmarks represent specific test scenarios and actual performance may vary based on usage patterns. Chunk operations are optimized for bulk operations and scenarios where structural sharing provides benefits. View the complete benchmark code and results in our [operations.rs](benches/operations.rs) benchmark file.
 
@@ -159,7 +159,7 @@ Note: These benchmarks represent specific test scenarios and actual performance 
 The `Chunk<A>` type is implemented as an enum with four variants:
 
 - `Empty`: Represents an empty chunk
-- `Append`: Represents a single element appended to another chunk
+- `Single`: Represents a chunk with a single element
 - `Concat`: Represents the concatenation of two chunks
 - `TransformFlatten`: Represents a lazy transformation and flattening of elements
 

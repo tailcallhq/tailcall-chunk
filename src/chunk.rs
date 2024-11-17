@@ -61,8 +61,8 @@ use std::rc::Rc;
 pub enum Chunk<A> {
     /// Represents an empty chunk
     Empty,
-    /// Represents a single element `A` appended to another chunk
-    Append(A, Rc<Chunk<A>>),
+    /// Represents a single element `A`
+    Single(A),
 
     /// Represents the concatenation of two chunks
     Concat(Rc<Chunk<A>>, Rc<Chunk<A>>),
@@ -91,7 +91,7 @@ impl<A> Chunk<A> {
     /// assert!(!chunk.is_null());
     /// ```
     pub fn new(a: A) -> Self {
-        Chunk::default().append(a)
+        Chunk::Single(a)
     }
 
     /// Returns `true` if the chunk is empty.
@@ -123,7 +123,11 @@ impl<A> Chunk<A> {
     /// assert_eq!(chunk.as_vec(), vec![1, 2]);
     /// ```
     pub fn append(self, a: A) -> Self {
-        Chunk::Append(a, Rc::new(self))
+        if self.is_null() {
+            Chunk::new(a)
+        } else {
+            self.concat(Chunk::new(a))
+        }
     }
 
     /// Prepend a new element to the beginning of the chunk.
@@ -139,7 +143,11 @@ impl<A> Chunk<A> {
     /// assert_eq!(chunk.as_vec(), vec![2, 1]);
     /// ```
     pub fn prepend(self, a: A) -> Self {
-        Chunk::new(a).concat(self)
+        if self.is_null() {
+            Chunk::new(a)
+        } else {
+            Chunk::new(a).concat(self)
+        }
     }
 
     /// Concatenates this chunk with another chunk.
@@ -262,8 +270,7 @@ impl<A> Chunk<A> {
     {
         match self {
             Chunk::Empty => {}
-            Chunk::Append(a, rest) => {
-                rest.as_vec_mut(buf);
+            Chunk::Single(a) => {
                 buf.push(a.clone());
             }
             Chunk::Concat(a, b) => {
