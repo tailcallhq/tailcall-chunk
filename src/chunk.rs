@@ -20,7 +20,7 @@
 //! assert_eq!(combined.as_vec(), vec![1, 2, 3, 4]);
 //! ```
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 /// A persistent data structure that provides efficient append and concatenation operations.
 ///
@@ -66,7 +66,7 @@ pub enum Chunk<A> {
     /// Represents the concatenation of two chunks, enabling O(1) concatenation
     Concat(Rc<Chunk<A>>, Rc<Chunk<A>>),
     /// Represents a collection of elements
-    Collect(Vec<A>),
+    Collect(Rc<RefCell<Vec<A>>>),
     /// Represents a lazy transformation that flattens elements
     TransformFlatten(Rc<Chunk<A>>, Rc<dyn Fn(A) -> Chunk<A>>),
 }
@@ -112,7 +112,7 @@ impl<A> Chunk<A> {
     pub fn is_null(&self) -> bool {
         match self {
             Chunk::Empty => true,
-            Chunk::Collect(vec) => vec.is_empty(),
+            Chunk::Collect(vec) => vec.borrow().is_empty(),
             _ => false,
         }
     }
@@ -130,11 +130,7 @@ impl<A> Chunk<A> {
     /// assert_eq!(chunk.as_vec(), vec![1, 2]);
     /// ```
     pub fn append(self, a: A) -> Self {
-        if self.is_null() {
-            Chunk::new(a)
-        } else {
-            self.concat(Chunk::new(a))
-        }
+        self.concat(Chunk::new(a))
     }
 
     /// Prepend a new element to the beginning of the chunk.
@@ -176,13 +172,25 @@ impl<A> Chunk<A> {
     /// assert_eq!(combined.as_vec(), vec![1, 2, 3, 4]);
     /// ```
     pub fn concat(self, other: Chunk<A>) -> Chunk<A> {
-        if self.is_null() {
-            return other;
+        match (self, other) {
+            // Handle null cases
+            (Chunk::Empty, other) => other,
+            (this, Chunk::Empty) => this,
+            (Chunk::Single(a), Chunk::Single(b)) => {
+                Chunk::Collect(Rc::new(RefCell::new(vec![a, b])))
+            }
+            (Chunk::Collect(vec), Chunk::Single(a)) => {
+                if Rc::strong_count(&vec) == 1 {
+                    // Only clone if there are no other references
+                    vec.borrow_mut().push(a);
+                    Chunk::Collect(vec)
+                } else {
+                    Chunk::Concat(Rc::new(Chunk::Collect(vec)), Rc::new(Chunk::Single(a)))
+                }
+            }
+            // Handle all other cases with Concat
+            (this, that) => Chunk::Concat(Rc::new(this), Rc::new(that)),
         }
-        if other.is_null() {
-            return self;
-        }
-        Chunk::Concat(Rc::new(self), Rc::new(other))
     }
 
     /// Transforms each element in the chunk using the provided function.
@@ -241,7 +249,7 @@ impl<A> Chunk<A> {
     where
         A: Clone,
     {
-        Chunk::Collect(self.as_vec())
+        Chunk::Collect(Rc::new(RefCell::new(self.as_vec())))
     }
 
     /// Transforms each element in the chunk into a new chunk and flattens the result.
@@ -323,7 +331,7 @@ impl<A> Chunk<A> {
                 }
             }
             Chunk::Collect(vec) => {
-                buf.extend(vec.iter().cloned());
+                buf.extend(vec.borrow().iter().cloned());
             }
         }
     }
@@ -345,7 +353,7 @@ impl<A> FromIterator<A> for Chunk<A> {
         for item in iter {
             chunk.push(item);
         }
-        Chunk::Collect(chunk)
+        Chunk::Collect(Rc::new(RefCell::new(chunk)))
     }
 }
 
@@ -582,5 +590,23 @@ mod tests {
         // Test collecting from map iterator
         let doubled: Chunk<_> = vec![1, 2, 3].into_iter().map(|x| x * 2).collect();
         assert_eq!(doubled.as_vec(), vec![2, 4, 6]);
+    }
+
+    #[test]
+    fn test_concat_optimization() {
+        // Create a collected chunk
+        let collected: Chunk<i32> = vec![1, 2, 3].into_iter().collect();
+
+        // Concat a single element
+        let result = collected.concat(Chunk::Single(4));
+
+        // Verify the result
+        assert_eq!(result.as_vec(), vec![1, 2, 3, 4]);
+
+        // Verify it's still a Collect variant (not a Concat)
+        match result {
+            Chunk::Collect(_) => (), // This is what we want
+            _ => panic!("Expected Collect variant after optimization"),
+        }
     }
 }

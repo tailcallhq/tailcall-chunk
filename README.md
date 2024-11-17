@@ -164,10 +164,10 @@ The following table compares the actual performance of Chunk vs Vector operation
 
 | Operation | Chunk Performance | Vector Performance | Faster                         |
 | --------- | ----------------- | ------------------ | ------------------------------ |
-| Append    | 1.93 ms           | 553.03 µs          | Vec is `~3.50` times faster    |
-| Prepend   | 1.62 ms           | 21.71 ms           | Chunk is `~13.00` times faster |
-| Concat    | 77.84 ns          | 513.04 µs          | Chunk is `~6,600` times faster |
-| Clone     | 5.82 ns           | 1.18 µs            | Vec is `~200` times faster     |
+| Append    | 604.02 µs         | 560.58 µs          | Vec is `~1.08` times faster    |
+| Prepend   | 1.63 ms           | 21.95 ms           | Chunk is `~13.47` times faster |
+| Concat    | 71.17 ns          | 494.45 µs          | Chunk is `~6,947` times faster |
+| Clone     | 4.16 ns           | 1.10 µs            | Chunk is `~264` times faster   |
 
 Note: These benchmarks represent specific test scenarios and actual performance may vary based on usage patterns. Chunk operations are optimized for bulk operations and scenarios where structural sharing provides benefits. View the complete benchmark code and results in our [operations.rs](benches/operations.rs) benchmark file.
 
