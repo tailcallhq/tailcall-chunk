@@ -1,6 +1,6 @@
 [package]
 name = "tailcall-chunk"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2021"
 license = "Apache-2.0"
 description = "A Rust implementation of a persistent data structure for efficient append and concatenation operations."
