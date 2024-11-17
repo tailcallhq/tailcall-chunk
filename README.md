@@ -145,12 +145,12 @@ let version2 = original.clone().append(4);  // Both versions share data
 
 The following table compares the actual performance of Chunk vs Vector operations based on [our benchmarks](benches/operations.rs) (lower is better):
 
-| Operation | Chunk Performance | Vector Performance | Notes                                     |
-| --------- | ----------------- | ------------------ | ----------------------------------------- |
-| Append    | 1.08 ms           | 561.37 µs          | Vector is ~2x faster for single appends   |
-| Prepend   | 2.26 ms           | 22.13 ms           | Chunk is ~10x faster for single prepends  |
-| Concat    | 169.76 ns         | 491.55 µs          | Chunk is ~2,900x faster for concatenation |
-| Clone     | 4.11 ns           | 1.35 µs            | Chunk is ~330x faster for cloning         |
+| Operation | Chunk Performance | Vector Performance | Faster                       |
+| --------- | ----------------- | ------------------ | ---------------------------- |
+| Append    | 1.93 ms           | 553.03 µs          | Vec is `~3.50` times faster    |
+| Prepend   | 1.62 ms           | 21.71 ms           | Chunk is `~13.00` times faster |
+| Concat    | 77.84 ns          | 513.04 µs          | Chunk is `~6,600` times faster |
+| Clone     | 5.82 ns           | 1.18 µs            | Vec is `~200` times faster     |
 
 Note: These benchmarks represent specific test scenarios and actual performance may vary based on usage patterns. Chunk operations are optimized for bulk operations and scenarios where structural sharing provides benefits. View the complete benchmark code and results in our [operations.rs](benches/operations.rs) benchmark file.
 
