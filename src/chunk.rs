@@ -59,15 +59,13 @@ use std::rc::Rc;
 /// - [Structural Sharing](https://hypirion.com/musings/understanding-persistent-vector-pt-1)
 #[derive(Clone)]
 pub enum Chunk<A> {
-    /// Represents an empty chunk
+    /// Represents an empty chunk with no elements
     Empty,
-    /// Represents a single element `A`
+    /// Represents a chunk containing exactly one element
     Single(A),
-
-    /// Represents the concatenation of two chunks
+    /// Represents the concatenation of two chunks, enabling O(1) concatenation
     Concat(Rc<Chunk<A>>, Rc<Chunk<A>>),
-
-    /// Represents a lazy flattening of elements
+    /// Represents a lazy transformation that flattens elements
     TransformFlatten(Rc<Chunk<A>>, Rc<dyn Fn(A) -> Chunk<A>>),
 }
 
@@ -81,7 +79,10 @@ impl<A> Default for Chunk<A> {
 }
 
 impl<A> Chunk<A> {
-    /// Creates a new empty chunk.
+    /// Creates a new chunk containing a single element.
+    ///
+    /// # Arguments
+    /// * `a` - The element to store in the chunk
     ///
     /// # Examples
     /// ```
@@ -407,9 +408,14 @@ mod tests {
             .append(String::from("world"));
         assert_eq!(string_chunk.as_vec().len(), 2);
 
-        // Test with floating point numbers
-        let float_chunk = Chunk::default().append(3.14).append(2.718);
-        assert_eq!(float_chunk.as_vec(), vec![3.14, 2.718]);
+        // Test with floating point numbers - using standard constants
+        let float_chunk = Chunk::default()
+            .append(std::f64::consts::PI)
+            .append(std::f64::consts::E);
+        assert_eq!(
+            float_chunk.as_vec(),
+            vec![std::f64::consts::PI, std::f64::consts::E]
+        );
 
         // Test with boolean values
         let bool_chunk = Chunk::default().append(true).append(false).append(true);
