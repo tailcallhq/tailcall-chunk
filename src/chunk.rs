@@ -281,6 +281,26 @@ impl<A> Chunk<A> {
     }
 }
 
+impl<A> FromIterator<A> for Chunk<A> {
+    /// Creates a chunk from an iterator.
+    ///
+    /// # Examples
+    /// ```
+    /// use tailcall_chunk::Chunk;
+    ///
+    /// let vec = vec![1, 2, 3];
+    /// let chunk: Chunk<_> = vec.into_iter().collect();
+    /// assert_eq!(chunk.as_vec(), vec![1, 2, 3]);
+    /// ```
+    fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
+        let mut chunk = Chunk::default();
+        for item in iter {
+            chunk = chunk.append(item);
+        }
+        chunk
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -488,5 +508,26 @@ mod tests {
             .append(2) // [1, 2]
             .prepend(3); // [3, 1, 2]
         assert_eq!(mixed.as_vec(), vec![3, 1, 2]);
+    }
+
+    #[test]
+    fn test_from_iterator() {
+        // Test collecting from an empty iterator
+        let empty_vec: Vec<i32> = vec![];
+        let empty_chunk: Chunk<i32> = empty_vec.into_iter().collect();
+        assert!(empty_chunk.is_null());
+
+        // Test collecting from a vector
+        let vec = vec![1, 2, 3];
+        let chunk: Chunk<_> = vec.into_iter().collect();
+        assert_eq!(chunk.as_vec(), vec![1, 2, 3]);
+
+        // Test collecting from a range
+        let range_chunk: Chunk<_> = (1..=5).collect();
+        assert_eq!(range_chunk.as_vec(), vec![1, 2, 3, 4, 5]);
+
+        // Test collecting from map iterator
+        let doubled: Chunk<_> = vec![1, 2, 3].into_iter().map(|x| x * 2).collect();
+        assert_eq!(doubled.as_vec(), vec![2, 4, 6]);
     }
 }
