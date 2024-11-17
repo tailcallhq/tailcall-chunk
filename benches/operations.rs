@@ -7,8 +7,8 @@ fn bench_operations(c: &mut Criterion) {
         .bench_function("chunk_append", |b| {
             b.iter(|| {
                 let mut chunk = Chunk::default();
-                for i in 0..1000 {
-                    chunk = chunk.append(i);
+                for i in 0..10000 {
+                    chunk = chunk.append(i.to_string());
                 }
 
                 black_box(chunk);
@@ -17,8 +17,8 @@ fn bench_operations(c: &mut Criterion) {
         .bench_function("vec_append", |b| {
             b.iter(|| {
                 let mut vec = Vec::new();
-                for i in 0..1000 {
-                    vec.push(i);
+                for i in 0..10000 {
+                    vec.push(i.to_string());
                 }
                 black_box(vec);
             })
@@ -29,8 +29,8 @@ fn bench_operations(c: &mut Criterion) {
         .bench_function("chunk_prepend", |b| {
             b.iter(|| {
                 let mut chunk = Chunk::default();
-                for i in 0..1000 {
-                    chunk = chunk.prepend(i);
+                for i in 0..10000 {
+                    chunk = chunk.prepend(i.to_string());
                 }
                 black_box(chunk);
             })
@@ -38,8 +38,8 @@ fn bench_operations(c: &mut Criterion) {
         .bench_function("vec_prepend", |b| {
             b.iter(|| {
                 let mut vec = Vec::new();
-                for i in 0..1000 {
-                    vec.insert(0, i);
+                for i in 0..10000 {
+                    vec.insert(0, i.to_string());
                 }
                 black_box(vec);
             })
@@ -48,15 +48,15 @@ fn bench_operations(c: &mut Criterion) {
     // Benchmark concat operations
     c.benchmark_group("concat")
         .bench_function("chunk_concat", |b| {
-            let chunk1: Chunk<_> = (0..500).collect();
-            let chunk2: Chunk<_> = (500..1000).collect();
+            let chunk1: Chunk<_> = (0..5000).map(|i| i.to_string()).collect();
+            let chunk2: Chunk<_> = (5000..10000).map(|i| i.to_string()).collect();
             b.iter(|| {
                 black_box(chunk1.clone().concat(chunk2.clone()));
             })
         })
         .bench_function("vec_concat", |b| {
-            let vec1: Vec<_> = (0..500).collect();
-            let vec2: Vec<_> = (500..1000).collect();
+            let vec1: Vec<_> = (0..5000).map(|i| i.to_string()).collect();
+            let vec2: Vec<_> = (5000..10000).map(|i| i.to_string()).collect();
             b.iter(|| {
                 let mut result = vec1.clone();
                 result.extend(vec2.iter().cloned());
@@ -67,13 +67,13 @@ fn bench_operations(c: &mut Criterion) {
     // Benchmark clone operations
     c.benchmark_group("clone")
         .bench_function("chunk_clone", |b| {
-            let chunk: Chunk<_> = (0..1000).collect();
+            let chunk: Chunk<_> = (0..10000).collect();
             b.iter(|| {
                 black_box(chunk.clone());
             })
         })
         .bench_function("vec_clone", |b| {
-            let vec: Vec<_> = (0..1000).collect();
+            let vec: Vec<_> = (0..10000).collect();
             b.iter(|| {
                 black_box(vec.clone());
             })
