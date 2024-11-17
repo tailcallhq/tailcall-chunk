@@ -7,6 +7,23 @@
 
 A Rust implementation of a persistent data structure that provides O(1) append and concatenation operations through structural sharing.
 
+- [Chunk](#chunk)
+  - [Features](#features)
+  - [Theoretical Background](#theoretical-background)
+    - [Relationship to Finger Trees](#relationship-to-finger-trees)
+    - [Performance Trade-offs](#performance-trade-offs)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+  - [Detailed Usage](#detailed-usage)
+    - [Working with Custom Types](#working-with-custom-types)
+    - [Memory Efficiency](#memory-efficiency)
+  - [Performance Characteristics](#performance-characteristics)
+    - [Benchmark Comparison](#benchmark-comparison)
+  - [Implementation Details](#implementation-details)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [References](#references)
+
 ## Features
 
 - **O(1) Append Operations**: Add elements to your chunk in constant time
