@@ -141,6 +141,19 @@ let version2 = original.clone().append(4);  // Both versions share data
 | `as_vec()`            | O(n)            | O(n)             |
 | `clone()`             | O(1)            | O(1)             |
 
+### Benchmark Comparison
+
+The following table compares the actual performance of Chunk vs Vector operations based on [our benchmarks](benches/operations.rs) (lower is better):
+
+| Operation | Chunk Performance | Vector Performance | Notes                                    |
+| --------- | ----------------- | ------------------ | ---------------------------------------- |
+| Append    | 57.48 µs          | 815.47 ns          | Vector is ~70x faster for single appends |
+| Prepend   | 160.65 µs         | 30.92 µs           | Vector is ~5x faster for single prepends |
+| Concat    | 68.27 ns          | 130.43 ns          | Chunk is ~2x faster for concatenation    |
+| Clone     | 4.06 ns           | 75.19 ns           | Chunk is ~18x faster for cloning         |
+
+Note: These benchmarks represent specific test scenarios and actual performance may vary based on usage patterns. Chunk operations are optimized for bulk operations and scenarios where structural sharing provides benefits. View the complete benchmark code and results in our [operations.rs](benches/operations.rs) benchmark file.
+
 ## Implementation Details
 
 The `Chunk<A>` type is implemented as an enum with four variants:
