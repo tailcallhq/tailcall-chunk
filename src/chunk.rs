@@ -65,6 +65,8 @@ pub enum Chunk<A> {
     Single(A),
     /// Represents the concatenation of two chunks, enabling O(1) concatenation
     Concat(Rc<Chunk<A>>, Rc<Chunk<A>>),
+    /// Represents a collection of elements
+    Collect(Vec<A>),
     /// Represents a lazy transformation that flattens elements
     TransformFlatten(Rc<Chunk<A>>, Rc<dyn Fn(A) -> Chunk<A>>),
 }
@@ -108,7 +110,11 @@ impl<A> Chunk<A> {
     /// assert!(!non_empty.is_null());
     /// ```
     pub fn is_null(&self) -> bool {
-        matches!(self, Chunk::Empty)
+        match self {
+            Chunk::Empty => true,
+            Chunk::Collect(vec) => vec.is_empty(),
+            _ => false,
+        }
     }
 
     /// Append a new element to the chunk.
@@ -207,6 +213,37 @@ impl<A> Chunk<A> {
         self.transform_flatten(move |a| Chunk::new(f(a)))
     }
 
+    /// Materializes a chunk by converting it into a collected form.
+    ///
+    /// This method evaluates any lazy transformations and creates a new chunk containing
+    /// all elements in a `Collect` variant. This can be useful for performance when you
+    /// plan to reuse the chunk multiple times, as it prevents re-evaluation of transformations.
+    ///
+    /// # Performance
+    /// - Time complexity: O(n) where n is the number of elements
+    /// - Space complexity: O(n) as it creates a new vector containing all elements
+    ///
+    /// # Examples
+    /// ```
+    /// use tailcall_chunk::Chunk;
+    ///
+    /// let chunk = Chunk::default()
+    ///     .append(1)
+    ///     .append(2)
+    ///     .transform(|x| x * 2);  // Lazy transformation
+    ///
+    /// // Materialize the chunk to evaluate the transformation once
+    /// let materialized = chunk.materialize();
+    ///
+    /// assert_eq!(materialized.as_vec(), vec![2, 4]);
+    /// ```
+    pub fn materialize(self) -> Chunk<A>
+    where
+        A: Clone,
+    {
+        Chunk::Collect(self.as_vec())
+    }
+
     /// Transforms each element in the chunk into a new chunk and flattens the result.
     ///
     /// This method creates a lazy representation of the transformation without actually
@@ -285,6 +322,9 @@ impl<A> Chunk<A> {
                     f(elem).as_vec_mut(buf);
                 }
             }
+            Chunk::Collect(vec) => {
+                buf.extend(vec.iter().cloned());
+            }
         }
     }
 }
@@ -301,11 +341,11 @@ impl<A> FromIterator<A> for Chunk<A> {
     /// assert_eq!(chunk.as_vec(), vec![1, 2, 3]);
     /// ```
     fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
-        let mut chunk = Chunk::default();
+        let mut chunk = Vec::default();
         for item in iter {
-            chunk = chunk.append(item);
+            chunk.push(item);
         }
-        chunk
+        Chunk::Collect(chunk)
     }
 }
 
