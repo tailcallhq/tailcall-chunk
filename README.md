@@ -60,12 +60,13 @@ Like Finger Trees, our structure can be viewed as an extension of Okasaki's impl
 
 While Finger Trees achieve logarithmic time for concatenation, our implementation optimizes for constant-time operations through lazy evaluation. This means:
 
-- Append and concatenation are always O(1)
+- Append, Prepend and concatenation are always O(1)
 - The cost is deferred to when we need to materialize the sequence (via `as_vec()`)
 - Memory usage grows with the number of operations until materialization
 
 This trade-off is particularly beneficial in scenarios where:
 
+- Write operations need to be performed extensively
 - Multiple transformations are chained
 - Not all elements need to be materialized
 - Structural sharing can be leveraged across operations
