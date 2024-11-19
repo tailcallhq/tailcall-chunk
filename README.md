@@ -26,7 +26,7 @@ A Rust implementation of a persistent data structure that provides O(1) append a
 
 ## Features
 
-- **O(1) Append Operations**: Add elements to your chunk in constant time
+- **O(1) Append/Prepend Operations**: Add elements to your chunk in constant time
 - **O(1) Concatenation**: Combine two chunks efficiently
 - **Immutable/Persistent**: All operations create new versions while preserving the original
 - **Memory Efficient**: Uses structural sharing via reference counting
