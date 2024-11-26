@@ -13,7 +13,7 @@ fn bench_operations(c: &mut Criterion) {
                     chunk = chunk.append(i.to_string());
                 }
 
-                chunk
+                chunk.as_vec()
             })
         })
         .bench_function("Vec", |b| {
@@ -22,6 +22,7 @@ fn bench_operations(c: &mut Criterion) {
                 for i in 0..N {
                     vec.push(i.to_string());
                 }
+
                 vec
             })
         });
@@ -34,7 +35,7 @@ fn bench_operations(c: &mut Criterion) {
                 for i in 0..N {
                     chunk = chunk.prepend(i.to_string());
                 }
-                chunk
+                chunk.as_vec()
             })
         })
         .bench_function("Vec", |b| {
@@ -50,16 +51,24 @@ fn bench_operations(c: &mut Criterion) {
     // Benchmark concat operations
     c.benchmark_group("concat")
         .bench_function("Chunk", |b| {
-            let chunk1: Chunk<_> = (0..N / 2).map(|i| i.to_string()).collect();
-            let chunk2: Chunk<_> = (N / 2..N).map(|i| i.to_string()).collect();
-            b.iter(|| chunk1.clone().concat(chunk2.clone()))
+            let part: Chunk<_> = (0..100).map(|i| i.to_string()).collect();
+            b.iter(|| {
+                let mut chunk = Chunk::default();
+                for _ in 0..N {
+                    chunk = chunk.concat(part.clone());
+                }
+
+                chunk.as_vec()
+            })
         })
         .bench_function("Vec", |b| {
-            let vec1: Vec<_> = (0..N / 2).map(|i| i.to_string()).collect();
-            let vec2: Vec<_> = (N / 2..N).map(|i| i.to_string()).collect();
+            let part: Vec<_> = (0..100).map(|i| i.to_string()).collect();
             b.iter(|| {
-                let mut result = vec1.clone();
-                result.extend(vec2.iter().cloned());
+                let mut result = Vec::new();
+                for _ in 0..N {
+                    result.extend(part.iter().cloned());
+                }
+
                 result
             })
         });
@@ -68,7 +77,7 @@ fn bench_operations(c: &mut Criterion) {
     c.benchmark_group("clone")
         .bench_function("Chunk", |b| {
             let chunk: Chunk<_> = (0..N).collect();
-            b.iter(|| chunk.clone())
+            b.iter(|| chunk.clone().as_vec())
         })
         .bench_function("Vec", |b| {
             let vec: Vec<_> = (0..N).collect();
@@ -78,7 +87,7 @@ fn bench_operations(c: &mut Criterion) {
     // Benchmark from_iter operation
     c.benchmark_group("from_iter")
         .bench_function("Chunk", |b| {
-            b.iter(|| Chunk::from_iter((0..N).into_iter()));
+            b.iter(|| Chunk::from_iter((0..N).into_iter()).as_vec());
         })
         .bench_function("Vec", |b| b.iter(|| Vec::from_iter((0..N).into_iter())));
 }
