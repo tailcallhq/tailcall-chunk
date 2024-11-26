@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1](https://github.com/tailcallhq/tailcall-chunk/compare/v0.3.0...v0.3.1) - 2024-11-26
+
+### Other
+
+- use size hint when creating Chunk::Collect ([#28](https://github.com/tailcallhq/tailcall-chunk/pull/28))
+
 ## [0.3.0](https://github.com/tailcallhq/tailcall-chunk/compare/v0.2.5...v0.3.0) - 2024-11-19
 
 ### Other
