@@ -1,6 +1,8 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use tailcall_chunk::Chunk;
 
+const N: usize = 10000;
+
 fn bench_operations(c: &mut Criterion) {
     // Benchmark append operations
     c.benchmark_group("append")
@@ -78,6 +80,13 @@ fn bench_operations(c: &mut Criterion) {
                 black_box(vec.clone());
             })
         });
+
+    // Benchmark from_iter operation
+    c.benchmark_group("from_iter")
+        .bench_function("Chunk", |b| {
+            b.iter(|| Chunk::from_iter((0..N).into_iter()));
+        })
+        .bench_function("Vec", |b| b.iter(|| Vec::from_iter((0..N).into_iter())));
 }
 
 criterion_group!(benches, bench_operations);
