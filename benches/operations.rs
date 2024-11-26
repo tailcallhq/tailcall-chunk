@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use tailcall_chunk::Chunk;
 
 const N: usize = 10000;
@@ -6,79 +6,73 @@ const N: usize = 10000;
 fn bench_operations(c: &mut Criterion) {
     // Benchmark append operations
     c.benchmark_group("append")
-        .bench_function("chunk_append", |b| {
+        .bench_function("Chunk", |b| {
             b.iter(|| {
                 let mut chunk = Chunk::default();
-                for i in 0..10000 {
+                for i in 0..N {
                     chunk = chunk.append(i.to_string());
                 }
 
-                black_box(chunk);
+                chunk
             })
         })
-        .bench_function("vec_append", |b| {
+        .bench_function("Vec", |b| {
             b.iter(|| {
                 let mut vec = Vec::new();
-                for i in 0..10000 {
+                for i in 0..N {
                     vec.push(i.to_string());
                 }
-                black_box(vec);
+                vec
             })
         });
 
     // Benchmark prepend operations
     c.benchmark_group("prepend")
-        .bench_function("chunk_prepend", |b| {
+        .bench_function("Chunk", |b| {
             b.iter(|| {
                 let mut chunk = Chunk::default();
-                for i in 0..10000 {
+                for i in 0..N {
                     chunk = chunk.prepend(i.to_string());
                 }
-                black_box(chunk);
+                chunk
             })
         })
-        .bench_function("vec_prepend", |b| {
+        .bench_function("Vec", |b| {
             b.iter(|| {
                 let mut vec = Vec::new();
-                for i in 0..10000 {
+                for i in 0..N {
                     vec.insert(0, i.to_string());
                 }
-                black_box(vec);
+                vec
             })
         });
 
     // Benchmark concat operations
     c.benchmark_group("concat")
-        .bench_function("chunk_concat", |b| {
-            let chunk1: Chunk<_> = (0..5000).map(|i| i.to_string()).collect();
-            let chunk2: Chunk<_> = (5000..10000).map(|i| i.to_string()).collect();
-            b.iter(|| {
-                black_box(chunk1.clone().concat(chunk2.clone()));
-            })
+        .bench_function("Chunk", |b| {
+            let chunk1: Chunk<_> = (0..N / 2).map(|i| i.to_string()).collect();
+            let chunk2: Chunk<_> = (N / 2..N).map(|i| i.to_string()).collect();
+            b.iter(|| chunk1.clone().concat(chunk2.clone()))
         })
-        .bench_function("vec_concat", |b| {
-            let vec1: Vec<_> = (0..5000).map(|i| i.to_string()).collect();
-            let vec2: Vec<_> = (5000..10000).map(|i| i.to_string()).collect();
+        .bench_function("Vec", |b| {
+            let vec1: Vec<_> = (0..N / 2).map(|i| i.to_string()).collect();
+            let vec2: Vec<_> = (N / 2..N).map(|i| i.to_string()).collect();
             b.iter(|| {
                 let mut result = vec1.clone();
                 result.extend(vec2.iter().cloned());
-                black_box(result)
+                result
             })
         });
 
     // Benchmark clone operations
     c.benchmark_group("clone")
-        .bench_function("chunk_clone", |b| {
-            let chunk: Chunk<_> = (0..10000).collect();
-            b.iter(|| {
-                black_box(chunk.clone());
-            })
+        .bench_function("Chunk", |b| {
+            let chunk: Chunk<_> = (0..N).collect();
+            b.iter(|| chunk.clone())
         })
-        .bench_function("vec_clone", |b| {
-            let vec: Vec<_> = (0..10000).collect();
-            b.iter(|| {
-                black_box(vec.clone());
-            })
+        .bench_function("Vec", |b| {
+            let vec: Vec<_> = (0..N).collect();
+            b.iter(|| vec.clone())
         });
 
     // Benchmark from_iter operation
