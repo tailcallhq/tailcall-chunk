@@ -264,19 +264,41 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "gh-workflow"
-version = "0.4.1"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae1ad3bcceabc26816ce586fece0653c5253300dcfa66c0a62efed1ccb5f745d"
+checksum = "65c9f1a4f712e5dadf26e2ad8d186e365d32f8c49db502bc11d7fed25205a722"
 dependencies = [
  "async-trait",
  "derive_more",
  "derive_setters",
+ "gh-workflow-macros",
  "indexmap",
  "merge",
  "serde",
  "serde_json",
  "serde_yaml",
  "strum_macros",
+]
+
+[[package]]
+name = "gh-workflow-macros"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "84a11ebc296ed5b20738f66eb9b64dc2d1f4906517b1662c7b416612c66a1cbc"
+dependencies = [
+ "heck",
+ "quote",
+ "syn 2.0.87",
+]
+
+[[package]]
+name = "gh-workflow-tailcall"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d23e573ef49cbda082c7f0440cefe569a054b2f447529168668f9da6c52edc43"
+dependencies = [
+ "derive_setters",
+ "gh-workflow",
 ]
 
 [[package]]
@@ -651,7 +673,7 @@ name = "tailcall-chunk"
 version = "0.3.1"
 dependencies = [
  "criterion",
- "gh-workflow",
+ "gh-workflow-tailcall",
 ]
 
 [[package]]
