@@ -15,11 +15,11 @@
 # ----------------------------- END WARNING -------------------------
 # -------------------------------------------------------------------
 
-name: Build and Test
+name: ci
 env:
   RUSTFLAGS: -Dwarnings
 on:
-  pull_request_target:
+  pull_request:
     types:
     - opened
     - synchronize
@@ -33,22 +33,41 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
     - name: Setup Rust Toolchain
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        toolchain: stable, nightly
-        components: clippy, rustfmt
+        toolchain: stable
     - name: Cargo Test
       run: cargo test --all-features --workspace
+    - name: Cargo Bench
+      run: cargo bench --workspace
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    - name: Setup Rust Toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: nightly
+        components: clippy, rustfmt
     - name: Cargo Fmt
-      run: cargo +nightly fmt --check
+      run: cargo +nightly fmt --all --check
     - name: Cargo Clippy
       run: cargo +nightly clippy --all-features --workspace -- -D warnings
   release:
-    needs: build
+    needs:
+    - build
+    - lint
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     name: Release
     runs-on: ubuntu-latest
     permissions:
@@ -62,4 +81,33 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
     - name: Release Plz
-      uses: MarcoIeni/release-plz-action@v0.5
+      uses: release-plz/action@v0.5
+      with:
+        command: release
+    concurrency:
+      group: release-${{github.ref}}
+      cancel-in-progress: false
+  release-pr:
+    needs:
+    - build
+    - lint
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    name: Release Pr
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    - name: Release Plz
+      uses: release-plz/action@v0.5
+      with:
+        command: release-pr
+    concurrency:
+      group: release-${{github.ref}}
+      cancel-in-progress: false

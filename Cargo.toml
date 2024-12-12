@@ -10,7 +10,7 @@ documentation = "https://docs.rs/tailcall-chunk"
 [dependencies]
 
 [dev-dependencies]
-gh-workflow = "0.4"
+gh-workflow-tailcall = "0.2.0"
 criterion = "0.5"
 
 [[bench]]
