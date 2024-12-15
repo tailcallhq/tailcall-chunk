@@ -84,9 +84,9 @@ fn bench_operations(c: &mut Criterion) {
     // Benchmark from_iter operation
     c.benchmark_group("from_iter")
         .bench_function("Chunk", |b| {
-            b.iter(|| Chunk::from_iter((0..N).into_iter()));
+            b.iter(|| Chunk::from_iter((0..N)));
         })
-        .bench_function("Vec", |b| b.iter(|| Vec::from_iter((0..N).into_iter())));
+        .bench_function("Vec", |b| b.iter(|| Vec::from_iter((0..N))));
 }
 
 criterion_group!(benches, bench_operations);
