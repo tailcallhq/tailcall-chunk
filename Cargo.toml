@@ -11,7 +11,7 @@ documentation = "https://docs.rs/tailcall-chunk"
 
 [dev-dependencies]
 gh-workflow-tailcall = "0.2.0"
-criterion = "0.5"
+criterion = "0.7"
 
 [[bench]]
 name = "operations"
